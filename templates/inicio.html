@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- SECCIÓN DE INICIO -->
+<section class="content-card bg-blue-50/70 p-10">
+    <h2 class="text-4xl font-bold text-center text-gray-800 mb-8">Bienvenidos a la Biblioteca</h2>
+    
+    <!-- Estadísticas en tiempo real -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+        <div class="bg-white p-4 rounded-lg shadow text-center">
+            <div class="text-2xl font-bold text-blue-600" data-counter="total_libros">
+                {{ estadisticas.total_libros if estadisticas else 0 }}
+            </div>
+            <div class="text-gray-600 text-sm">Total Libros</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow text-center">
+            <div class="text-2xl font-bold text-green-600" data-counter="libros_disponibles">
+                {{ estadisticas.libros_disponibles if estadisticas else 0 }}
+            </div>
+            <div class="text-gray-600 text-sm">Disponibles</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow text-center">
+            <div class="text-2xl font-bold text-orange-600" data-counter="prestamos_activos">
+                {{ estadisticas.prestamos_activos if estadisticas else 0 }}
+            </div>
+            <div class="text-gray-600 text-sm">Préstamos Activos</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow text-center">
+            <div class="text-2xl font-bold text-purple-600" data-counter="total_usuarios">
+                {{ estadisticas.total_usuarios if estadisticas else 0 }}
+            </div>
+            <div class="text-gray-600 text-sm">Usuarios</div>
+        </div>
+    </div>
+
+    <!-- Formulario de Búsqueda -->
+    <form id="form-busqueda-inicio" class="flex justify-center mb-16">
+        <div class="relative w-full max-w-sm">
+            <input type="text" id="busqueda-inicio" name="q" placeholder="Buscar libros..." 
+                   class="form-input rounded-r-none pr-10 focus-visible" />
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                <button type="submit" class="btn-primary rounded-l-none px-6">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Contenido Destacado y Noticias -->
+    <div class="grid md:grid-cols-2 gap-12 mt-10">
+        <!-- Libros Destacados -->
+        <div>
+            <h3 class="text-2xl font-semibold mb-6 border-b pb-2">Libros destacados</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="libros-destacados">
+                {% for libro in libros_destacados %}
+                <div class="libro-card hover-lift" 
+                     onclick="window.location.href='/catalogo?q={{ libro.titulo|urlencode }}'">
+                    <div class="h-32 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg mb-3 flex items-center justify-center">
+                        <i data-lucide="book" class="w-8 h-8 text-blue-500"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-800 text-sm text-center line-clamp-2">{{ libro.titulo }}</h4>
+                    <p class="text-xs text-gray-600 text-center mt-1">{{ libro.autor }}</p>
+                    <div class="mt-2 text-center">
+                        <span class="badge {{ 'estado-disponible' if libro.disponible else 'estado-prestado' }}">
+                            {{ 'Disponible' if libro.disponible else 'Prestado' }}
+                        </span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-span-3 text-center py-4 text-gray-500">
+                    <i data-lucide="book-open" class="w-8 h-8 mx-auto mb-2 text-gray-300"></i>
+                    <p class="text-sm">No hay libros destacados</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Noticias y Actividad Reciente -->
+        <div>
+            <h3 class="text-2xl font-semibold mb-6 border-b pb-2">Actividad Reciente</h3>
+            <div class="space-y-4" id="actividad-reciente">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i data-lucide="book-check" class="w-4 h-4 text-green-500 mr-2"></i>
+                        <span>Nuevos libros agregados al catálogo</span>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-1">Hace 2 días</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i data-lucide="users" class="w-4 h-4 text-blue-500 mr-2"></i>
+                        <span>Record de préstamos este mes: {{ estadisticas.prestamos_activos if estadisticas else 0 }}</span>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-1">Actualizado hoy</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i data-lucide="calendar" class="w-4 h-4 text-orange-500 mr-2"></i>
+                        <span>Horario extendido durante exámenes finales</span>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-1">Próxima semana</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar búsqueda en inicio
+    const formBusqueda = document.getElementById('form-busqueda-inicio');
+    if (formBusqueda) {
+        formBusqueda.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const query = document.getElementById('busqueda-inicio').value;
+            if (query.trim()) {
+                window.location.href = '/catalogo?q=' + encodeURIComponent(query);
+            }
+        });
+    }
+
+    // Actualizar estadísticas en tiempo real cada 30 segundos
+    setInterval(actualizarEstadisticas, 30000);
+});
+
+async function actualizarEstadisticas() {
+    try {
+        const response = await fetch('/api/estadisticas');
+        const result = await response.json();
+        
+        if (result.estado === 'ok') {
+            // Actualizar contadores con animación
+            ['total_libros', 'libros_disponibles', 'prestamos_activos', 'total_usuarios'].forEach(key => {
+                const elemento = document.querySelector(`[data-counter="${key}"]`);
+                if (elemento && result[key] !== undefined) {
+                    animateCounter(elemento, result[key]);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error actualizando estadísticas:', error);
+    }
+}
+
+function animateCounter(element, target) {
+    const current = parseInt(element.textContent) || 0;
+    if (current === target) return;
+    
+    const increment = target > current ? 1 : -1;
+    let currentValue = current;
+
+    const timer = setInterval(() => {
+        currentValue += increment;
+        element.textContent = currentValue;
+        
+        if ((increment > 0 && currentValue >= target) || 
+            (increment < 0 && currentValue <= target)) {
+            element.textContent = target;
+            clearInterval(timer);
+        }
+    }, 50);
+}
+</script>
+{% endblock %}

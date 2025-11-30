@@ -1,0 +1,697 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- SECCIÓN DE REGISTRO DE PRÉSTAMOS -->
+<section class="content-card bg-blue-50/70 p-10 max-w-4xl mx-auto">
+    <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">Registro de Préstamos</h2>
+
+    <form id="form-prestamo" class="space-y-10">
+        <div class="grid md:grid-cols-2 gap-10">
+            <!-- Datos del Usuario -->
+            <div>
+                <h3 class="text-2xl font-semibold mb-6 border-b pb-2 text-gray-700">Datos del Usuario</h3>
+                <div class="space-y-6">
+                    <div class="flex flex-col">
+                        <label for="prestamo-nombre" class="mb-1 font-medium text-gray-600">Nombre Completo *</label>
+                        <input type="text" id="prestamo-nombre" name="nombre" placeholder="Ej: María González" required
+                            class="form-input focus-visible" />
+                        <div class="validation-message hidden text-sm mt-1"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="prestamo-estudiante" class="mb-1 font-medium text-gray-600">Número de Estudiante *</label>
+                        <input type="text" id="prestamo-estudiante" name="numero_estudiante" placeholder="Ej: 2023001" required
+                            class="form-input focus-visible" 
+                            pattern="[0-9]{5,10}"
+                            title="El número debe tener entre 5 y 10 dígitos" />
+                        <div class="validation-message hidden text-sm mt-1"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="prestamo-email" class="mb-1 font-medium text-gray-600">Email</label>
+                        <input type="email" id="prestamo-email" name="email" placeholder="Ej: usuario@email.com"
+                            class="form-input focus-visible" />
+                        <div class="validation-message hidden text-sm mt-1"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="prestamo-telefono" class="mb-1 font-medium text-gray-600">Teléfono</label>
+                        <input type="tel" id="prestamo-telefono" name="telefono" placeholder="Ej: 0412-1234567"
+                            class="form-input focus-visible" />
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="prestamo-carrera" class="mb-1 font-medium text-gray-600">Carrera</label>
+                        <input type="text" id="prestamo-carrera" name="carrera" placeholder="Ej: Ingeniería"
+                            class="form-input focus-visible" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Datos del Libro -->
+            <div>
+                <h3 class="text-2xl font-semibold mb-6 border-b pb-2 text-gray-700">Datos del Libro</h3>
+                <div class="space-y-6">
+                    <div class="flex flex-col">
+                        <label for="prestamo-titulo" class="mb-1 font-medium text-gray-600">Título del Libro *</label>
+                        <div class="relative">
+                            <input type="text" id="prestamo-titulo" name="titulo" placeholder="Buscar título del libro" required
+                                class="form-input focus-visible pr-10" autocomplete="off" />
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
+                            </div>
+                            <div id="sugerencias-libros" class="sugerencias-container hidden"></div>
+                        </div>
+                        <div id="estado-libro" class="mt-2 text-sm hidden"></div>
+                        <div class="validation-message hidden text-sm mt-1"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="prestamo-autor" class="mb-1 font-medium text-gray-600">Autor *</label>
+                        <input type="text" id="prestamo-autor" name="autor" placeholder="Autor del libro" required
+                            class="form-input focus-visible" />
+                        <div class="validation-message hidden text-sm mt-1"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="prestamo-isbn" class="mb-1 font-medium text-gray-600">ISBN</label>
+                        <input type="text" id="prestamo-isbn" name="isbn" placeholder="ISBN (opcional)"
+                            class="form-input focus-visible" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Préstamo -->
+        <div class="bg-blue-50 p-6 rounded-lg border border-blue-200">
+            <h4 class="text-lg font-semibold text-blue-800 mb-4">Información del Préstamo</h4>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600">Fecha de Préstamo:</p>
+                    <p class="font-medium" id="fecha-prestamo">--/--/----</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Fecha Límite de Devolución:</p>
+                    <p class="font-medium text-red-600" id="fecha-limite">--/--/----</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-sm text-gray-600 mb-2">Condiciones del préstamo:</p>
+                    <ul class="text-sm text-gray-700 space-y-1">
+                        <li class="flex items-center">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mr-2"></i>
+                            Duración máxima: 15 días
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-yellow-500 mr-2"></i>
+                            Retraso o daños de libro: Multa sel servicio de biblioteca
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="book" class="w-4 h-4 text-blue-500 mr-2"></i>
+                            Máximo 3 libros por usuario
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón de Registro -->
+        <div class="flex justify-center md:col-span-2">
+            <button type="submit" id="btn-registrar-prestamo" 
+                class="btn-primary w-full md:w-1/2 py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="book-check" class="w-5 h-5 mr-2"></i>
+                Registrar Préstamo
+            </button>
+        </div>
+    </form>
+    
+    <!-- Mensaje de resultado -->
+    <div id="prestamo-message" class="mt-4 text-center text-lg font-medium hidden"></div>
+</section>
+
+<!-- Modal de Confirmación -->
+<div id="modal-confirmacion" class="modal-overlay hidden">
+    <div class="modal-content max-w-md">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="help-circle" class="w-8 h-8 text-blue-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Confirmar Préstamo</h3>
+            <p class="text-gray-600 mb-6">¿Estás seguro de que deseas registrar este préstamo?</p>
+            
+            <div class="bg-gray-50 p-4 rounded-lg mb-6 text-left">
+                <h4 class="font-semibold text-gray-800 mb-2">Resumen del Préstamo:</h4>
+                <div class="space-y-1 text-sm">
+                    <p><span class="font-medium">Usuario:</span> <span id="confirmar-usuario">-</span></p>
+                    <p><span class="font-medium">Libro:</span> <span id="confirmar-libro">-</span></p>
+                    <p><span class="font-medium">Fecha límite:</span> <span id="confirmar-fecha">-</span></p>
+                </div>
+            </div>
+            
+            <div class="flex justify-center space-x-4">
+                <button type="button" id="btn-cancelar-prestamo" 
+                    class="btn-secondary px-6 py-2">
+                    Cancelar
+                </button>
+                <button type="button" id="btn-confirmar-prestamo" 
+                    class="btn-primary px-6 py-2">
+                    <i data-lucide="check" class="w-4 h-4 mr-2"></i>
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Script específico para préstamos
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📚 Inicializando formulario de préstamos...');
+    
+    // Inicializar componentes
+    initPrestamo();
+    
+    // Configurar fechas
+    configurarFechasPrestamo();
+    
+    // Cargar datos desde URL si vienen del catálogo
+    cargarDatosDesdeURL();
+});
+
+function initPrestamo() {
+    // Configurar formulario
+    const formPrestamo = document.getElementById('form-prestamo');
+    if (formPrestamo) {
+        formPrestamo.addEventListener('submit', manejarEnvioPrestamo);
+    }
+
+    // Configurar validación en tiempo real
+    configurarValidacionFormulario();
+
+    // Configurar búsqueda de libros
+    configurarBusquedaLibros();
+
+    // Configurar modal de confirmación
+    configurarModalConfirmacion();
+}
+
+function configurarFechasPrestamo() {
+    const hoy = new Date();
+    const fechaLimite = new Date();
+    fechaLimite.setDate(hoy.getDate() + 15); // 15 días para devolución
+
+    // Formatear fechas
+    const opciones = { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit' 
+    };
+    
+    document.getElementById('fecha-prestamo').textContent = 
+        hoy.toLocaleDateString('es-VE', opciones);
+    document.getElementById('fecha-limite').textContent = 
+        fechaLimite.toLocaleDateString('es-VE', opciones);
+}
+
+function cargarDatosDesdeURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const libroId = urlParams.get('libro');
+    const titulo = urlParams.get('titulo');
+    const autor = urlParams.get('autor');
+
+    if (titulo) {
+        document.getElementById('prestamo-titulo').value = decodeURIComponent(titulo);
+    }
+    if (autor) {
+        document.getElementById('prestamo-autor').value = decodeURIComponent(autor);
+    }
+    
+    // Si viene un libro ID, cargar más información
+    if (libroId) {
+        cargarInformacionLibro(libroId);
+    }
+}
+
+async function cargarInformacionLibro(libroId) {
+    try {
+        const response = await fetch(`/api/libros/${libroId}`);
+        const result = await response.json();
+        
+        if (result.estado === 'ok' && result.libro) {
+            const libro = result.libro;
+            
+            // Actualizar campos del formulario
+            document.getElementById('prestamo-titulo').value = libro.titulo || '';
+            document.getElementById('prestamo-autor').value = libro.autor || '';
+            document.getElementById('prestamo-isbn').value = libro.isbn || '';
+            
+            // Verificar disponibilidad
+            const estadoLibro = document.getElementById('estado-libro');
+            const btnRegistrar = document.getElementById('btn-registrar-prestamo');
+            
+            if (libro.disponible && libro.cantidad_disponible > 0) {
+                estadoLibro.innerHTML = '<span class="text-green-600">✅ Libro disponible para préstamo</span>';
+                estadoLibro.classList.remove('hidden');
+                if (btnRegistrar) btnRegistrar.disabled = false;
+            } else {
+                estadoLibro.innerHTML = '<span class="text-red-600">❌ Libro no disponible</span>';
+                estadoLibro.classList.remove('hidden');
+                if (btnRegistrar) btnRegistrar.disabled = true;
+            }
+        }
+    } catch (error) {
+        console.error('Error cargando información del libro:', error);
+    }
+}
+
+function configurarValidacionFormulario() {
+    // Validación en tiempo real para campos requeridos
+    const camposRequeridos = document.querySelectorAll('input[required]');
+    camposRequeridos.forEach(campo => {
+        campo.addEventListener('blur', validarCampo);
+        campo.addEventListener('input', limpiarValidacionCampo);
+    });
+
+    // Validación específica para número de estudiante
+    const inputEstudiante = document.getElementById('prestamo-estudiante');
+    if (inputEstudiante) {
+        inputEstudiante.addEventListener('blur', validarNumeroEstudiante);
+    }
+
+    // Validación de email
+    const inputEmail = document.getElementById('prestamo-email');
+    if (inputEmail) {
+        inputEmail.addEventListener('blur', validarEmail);
+    }
+}
+
+function validarCampo(e) {
+    const campo = e.target;
+    const valor = campo.value.trim();
+    const contenedor = campo.parentElement;
+    const mensaje = contenedor.querySelector('.validation-message');
+
+    // Limpiar estado previo
+    campo.classList.remove('input-error', 'input-success');
+    if (mensaje) mensaje.classList.add('hidden');
+
+    if (!valor && campo.required) {
+        mostrarErrorCampo(campo, 'Este campo es obligatorio');
+        return false;
+    }
+
+    // Si pasa la validación
+    campo.classList.add('input-success');
+    return true;
+}
+
+function validarNumeroEstudiante(e) {
+    const campo = e.target;
+    const valor = campo.value.trim();
+    const contenedor = campo.parentElement;
+    const mensaje = contenedor.querySelector('.validation-message');
+
+    campo.classList.remove('input-error', 'input-success');
+    if (mensaje) mensaje.classList.add('hidden');
+
+    if (!valor) return true; // Ya se valida como requerido
+
+    if (!/^\d{5,10}$/.test(valor)) {
+        mostrarErrorCampo(campo, 'El número de estudiante debe tener entre 5 y 10 dígitos');
+        return false;
+    }
+
+    campo.classList.add('input-success');
+    return true;
+}
+
+function validarEmail(e) {
+    const campo = e.target;
+    const valor = campo.value.trim();
+    const contenedor = campo.parentElement;
+    const mensaje = contenedor.querySelector('.validation-message');
+
+    campo.classList.remove('input-error', 'input-success');
+    if (mensaje) mensaje.classList.add('hidden');
+
+    if (!valor) return true; // No es requerido
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(valor)) {
+        mostrarErrorCampo(campo, 'Por favor ingresa un email válido');
+        return false;
+    }
+
+    campo.classList.add('input-success');
+    return true;
+}
+
+function mostrarErrorCampo(campo, mensajeTexto) {
+    campo.classList.add('input-error');
+    const contenedor = campo.parentElement;
+    const mensaje = contenedor.querySelector('.validation-message');
+    
+    if (mensaje) {
+        mensaje.textContent = mensajeTexto;
+        mensaje.className = 'validation-message validation-error text-sm mt-1';
+        mensaje.classList.remove('hidden');
+    }
+}
+
+function limpiarValidacionCampo(e) {
+    const campo = e.target;
+    campo.classList.remove('input-error', 'input-success');
+    
+    const contenedor = campo.parentElement;
+    const mensaje = contenedor.querySelector('.validation-message');
+    if (mensaje) {
+        mensaje.classList.add('hidden');
+    }
+}
+
+function configurarBusquedaLibros() {
+    const inputTitulo = document.getElementById('prestamo-titulo');
+    if (!inputTitulo) return;
+
+    let timeout;
+    inputTitulo.addEventListener('input', function(e) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            const query = e.target.value.trim();
+            if (query.length >= 2) {
+                buscarLibrosPrestamo(query);
+            } else {
+                ocultarSugerencias();
+            }
+        }, 300);
+    });
+
+    // Ocultar sugerencias al hacer click fuera
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#prestamo-titulo') && !e.target.closest('#sugerencias-libros')) {
+            ocultarSugerencias();
+        }
+    });
+}
+
+async function buscarLibrosPrestamo(query) {
+    const sugerencias = document.getElementById('sugerencias-libros');
+    const estadoLibro = document.getElementById('estado-libro');
+
+    if (!sugerencias) return;
+
+    try {
+        const response = await fetch(`/api/libros/buscar?q=${encodeURIComponent(query)}`);
+        const result = await response.json();
+        
+        if (result.estado === 'ok' && result.libros.length > 0) {
+            mostrarSugerenciasPrestamo(result.libros, sugerencias);
+            sugerencias.classList.remove('hidden');
+        } else {
+            ocultarSugerencias();
+            if (estadoLibro && query.length >= 2) {
+                estadoLibro.innerHTML = '<span class="text-red-500">❌ No se encontraron libros con ese título</span>';
+                estadoLibro.classList.remove('hidden');
+            }
+        }
+    } catch (error) {
+        console.error('Error buscando libros:', error);
+        ocultarSugerencias();
+    }
+}
+
+function mostrarSugerenciasPrestamo(libros, contenedor) {
+    contenedor.innerHTML = libros.map(libro => `
+        <div class="sugerencia-item libro-sugerencia" 
+             data-titulo="${libro.titulo}" 
+             data-autor="${libro.autor}" 
+             data-isbn="${libro.isbn || ''}"
+             data-disponible="${libro.disponible}">
+            <div class="font-medium">${libro.titulo}</div>
+            <div class="text-sm text-gray-600">${libro.autor}</div>
+            <div class="text-xs ${libro.disponible ? 'text-green-600' : 'text-red-600'}">
+                ${libro.disponible ? '✅ Disponible' : '❌ Prestado'}
+            </div>
+        </div>
+    `).join('');
+
+    // Agregar event listeners a las sugerencias
+    document.querySelectorAll('.libro-sugerencia').forEach(element => {
+        element.addEventListener('click', function() {
+            seleccionarLibroPrestamo(this);
+        });
+    });
+}
+
+function seleccionarLibroPrestamo(element) {
+    const titulo = element.getAttribute('data-titulo');
+    const autor = element.getAttribute('data-autor');
+    const isbn = element.getAttribute('data-isbn');
+    const disponible = element.getAttribute('data-disponible') === 'true';
+    
+    // Actualizar campos del formulario
+    document.getElementById('prestamo-titulo').value = titulo;
+    document.getElementById('prestamo-autor').value = autor;
+    document.getElementById('prestamo-isbn').value = isbn;
+    
+    // Actualizar estado del libro
+    const estadoLibro = document.getElementById('estado-libro');
+    const btnRegistrar = document.getElementById('btn-registrar-prestamo');
+    
+    if (estadoLibro) {
+        if (disponible) {
+            estadoLibro.innerHTML = '<span class="text-green-600">✅ Libro disponible para préstamo</span>';
+            if (btnRegistrar) btnRegistrar.disabled = false;
+        } else {
+            estadoLibro.innerHTML = '<span class="text-red-600">❌ Libro actualmente prestado</span>';
+            if (btnRegistrar) btnRegistrar.disabled = true;
+        }
+        estadoLibro.classList.remove('hidden');
+    }
+    
+    ocultarSugerencias();
+}
+
+function ocultarSugerencias() {
+    const sugerencias = document.getElementById('sugerencias-libros');
+    if (sugerencias) {
+        sugerencias.classList.add('hidden');
+    }
+}
+
+function configurarModalConfirmacion() {
+    const btnCancelar = document.getElementById('btn-cancelar-prestamo');
+    const btnConfirmar = document.getElementById('btn-confirmar-prestamo');
+    
+    if (btnCancelar) {
+        btnCancelar.addEventListener('click', function() {
+            document.getElementById('modal-confirmacion').classList.add('hidden');
+        });
+    }
+    
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', confirmarPrestamo);
+    }
+
+    // Cerrar modal con Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.getElementById('modal-confirmacion').classList.add('hidden');
+        }
+    });
+}
+
+function manejarEnvioPrestamo(e) {
+    e.preventDefault();
+    console.log('📝 Procesando préstamo...');
+    
+    // Validar formulario
+    if (!validarFormularioCompleto()) {
+        mostrarMensaje('Por favor completa todos los campos obligatorios correctamente', 'error');
+        return;
+    }
+
+    // Mostrar modal de confirmación
+    mostrarModalConfirmacion();
+}
+
+function validarFormularioCompleto() {
+    let valido = true;
+    
+    // Validar campos requeridos
+    const camposRequeridos = document.querySelectorAll('input[required]');
+    camposRequeridos.forEach(campo => {
+        if (!campo.value.trim()) {
+            mostrarErrorCampo(campo, 'Este campo es obligatorio');
+            valido = false;
+        }
+    });
+
+    // Validar número de estudiante
+    const inputEstudiante = document.getElementById('prestamo-estudiante');
+    if (inputEstudiante && inputEstudiante.value.trim() && !/^\d{5,10}$/.test(inputEstudiante.value.trim())) {
+        mostrarErrorCampo(inputEstudiante, 'Número de estudiante inválido');
+        valido = false;
+    }
+
+    // Validar email si está presente
+    const inputEmail = document.getElementById('prestamo-email');
+    if (inputEmail && inputEmail.value.trim()) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(inputEmail.value.trim())) {
+            mostrarErrorCampo(inputEmail, 'Email inválido');
+            valido = false;
+        }
+    }
+
+    return valido;
+}
+
+function mostrarModalConfirmacion() {
+    // Obtener datos del formulario
+    const nombre = document.getElementById('prestamo-nombre').value;
+    const titulo = document.getElementById('prestamo-titulo').value;
+    const fechaLimite = document.getElementById('fecha-limite').textContent;
+    
+    // Actualizar modal
+    document.getElementById('confirmar-usuario').textContent = nombre;
+    document.getElementById('confirmar-libro').textContent = titulo;
+    document.getElementById('confirmar-fecha').textContent = fechaLimite;
+    
+    // Mostrar modal
+    document.getElementById('modal-confirmacion').classList.remove('hidden');
+}
+
+async function confirmarPrestamo() {
+    console.log('✅ Confirmando préstamo...');
+    
+    // Obtener datos del formulario
+    const formData = new FormData(document.getElementById('form-prestamo'));
+    const datos = Object.fromEntries(formData);
+    
+    // Mostrar loading
+    const btnConfirmar = document.getElementById('btn-confirmar-prestamo');
+    const btnOriginal = btnConfirmar.innerHTML;
+    btnConfirmar.innerHTML = '<div class="spinner-small mx-auto"></div> Procesando...';
+    btnConfirmar.disabled = true;
+    
+    try {
+        const response = await fetch('/api/registrar-prestamo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(datos)
+        });
+
+        const result = await response.json();
+        
+        if (result.estado === 'ok') {
+            // Éxito
+            mostrarMensaje('✅ ' + result.mensaje, 'success');
+            document.getElementById('modal-confirmacion').classList.add('hidden');
+            document.getElementById('form-prestamo').reset();
+            
+            // Mostrar información adicional si viene
+            if (result.fecha_limite) {
+                setTimeout(() => {
+                    mostrarMensaje(`Recuerda devolver el libro antes del ${new Date(result.fecha_limite).toLocaleDateString('es-VE')}`, 'info', 8000);
+                }, 2000);
+            }
+        } else {
+            // Error
+            throw new Error(result.mensaje);
+        }
+        
+    } catch (error) {
+        console.error('Error registrando préstamo:', error);
+        mostrarMensaje('❌ ' + error.message, 'error');
+    } finally {
+        // Restaurar botón
+        btnConfirmar.innerHTML = btnOriginal;
+        btnConfirmar.disabled = false;
+    }
+}
+
+function mostrarMensaje(mensaje, tipo = 'info', duracion = 5000) {
+    const mensajeElement = document.getElementById('prestamo-message');
+    if (!mensajeElement) return;
+
+    mensajeElement.textContent = mensaje;
+    mensajeElement.className = `mt-4 text-center text-lg font-medium p-4 rounded-lg fade-in ${
+        tipo === 'success' ? 'message-success' :
+        tipo === 'error' ? 'message-error' :
+        tipo === 'warning' ? 'message-warning' :
+        'bg-blue-500 text-white'
+    }`;
+    mensajeElement.classList.remove('hidden');
+
+    // Auto-remover después de la duración
+    setTimeout(() => {
+        mensajeElement.classList.add('hidden');
+    }, duracion);
+}
+
+// Inicializar íconos
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+});
+</script>
+
+<style>
+.spinner-small {
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.sugerencias-container {
+    position: absolute;
+    z-index: 10;
+    width: 100%;
+    margin-top: 0.25rem;
+    background-color: white;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    max-height: 15rem;
+    overflow-y: auto;
+}
+
+.sugerencia-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f3f4f6;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.sugerencia-item:hover {
+    background-color: #eff6ff;
+}
+
+.sugerencia-item:last-child {
+    border-bottom: none;
+}
+
+.validation-error {
+    color: #ef4444;
+}
+
+.validation-success {
+    color: #10b981;
+}
+
+.input-error {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2;
+}
+
+.input-success {
+    border-color: #10b981 !important;
+    background-color: #f0fdf4;
+}
+</style>
+{% endblock %}

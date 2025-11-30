@@ -1,0 +1,810 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- SECCIÓN DE REGISTRO DE DEVOLUCIONES -->
+<section class="content-card bg-blue-50/70 p-10 max-w-4xl mx-auto">
+    <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">Registro de Devoluciones</h2>
+
+    <form id="form-devolucion" class="space-y-10">
+        <div class="grid md:grid-cols-2 gap-10">
+            <!-- Datos del Libro -->
+            <div>
+                <h3 class="text-2xl font-semibold mb-6 border-b pb-2 text-gray-700">Datos del Libro</h3>
+                <div class="space-y-6">
+                    <div class="flex flex-col">
+                        <label for="devolucion-titulo" class="mb-1 font-medium text-gray-600">Título del Libro *</label>
+                        <div class="relative">
+                            <input type="text" id="devolucion-titulo" name="titulo" placeholder="Buscar título del libro" required
+                                class="form-input focus-visible pr-10" autocomplete="off" />
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
+                            </div>
+                            <div id="sugerencias-devolucion" class="sugerencias-container hidden"></div>
+                        </div>
+                        <div id="estado-prestamo" class="mt-2 text-sm hidden"></div>
+                        <div class="validation-message hidden text-sm mt-1"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="devolucion-isbn" class="mb-1 font-medium text-gray-600">ISBN (opcional)</label>
+                        <input type="text" id="devolucion-isbn" name="isbn" placeholder="ISBN del libro"
+                            class="form-input focus-visible" />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Datos del Usuario -->
+            <div>
+                <h3 class="text-2xl font-semibold mb-6 border-b pb-2 text-gray-700">Datos del Usuario</h3>
+                <div class="space-y-6">
+                    <div class="flex flex-col">
+                        <label for="devolucion-usuario" class="mb-1 font-medium text-gray-600">Usuario *</label>
+                        <div class="relative">
+                            <input type="text" id="devolucion-usuario" name="usuario" placeholder="Número de estudiante o nombre" required
+                                class="form-input focus-visible pr-10" autocomplete="off" />
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                <i data-lucide="user" class="w-4 h-4 text-gray-400"></i>
+                            </div>
+                            <div id="sugerencias-usuario" class="sugerencias-container hidden"></div>
+                        </div>
+                        <div id="info-usuario" class="mt-2 text-sm hidden"></div>
+                        <div class="validation-message hidden text-sm mt-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Préstamo Activo -->
+        <div id="info-prestamo-activo" class="bg-yellow-50 p-6 rounded-lg border border-yellow-200 hidden">
+            <h4 class="text-lg font-semibold text-yellow-800 mb-4">Préstamo Activo Encontrado</h4>
+            <div class="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-yellow-700 font-medium">Libro:</p>
+                    <p id="info-libro-titulo" class="text-gray-700">-</p>
+                </div>
+                <div>
+                    <p class="text-yellow-700 font-medium">Usuario:</p>
+                    <p id="info-usuario-nombre" class="text-gray-700">-</p>
+                </div>
+                <div>
+                    <p class="text-yellow-700 font-medium">Fecha de Préstamo:</p>
+                    <p id="info-fecha-prestamo" class="text-gray-700">-</p>
+                </div>
+                <div>
+                    <p class="text-yellow-700 font-medium">Fecha Límite:</p>
+                    <p id="info-fecha-limite" class="text-gray-700">-</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-yellow-700 font-medium">Estado:</p>
+                    <p id="info-estado-prestamo" class="text-gray-700">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de Multa (si aplica) -->
+        <div id="info-multa" class="bg-red-50 p-6 rounded-lg border border-red-200 hidden">
+            <h4 class="text-lg font-semibold text-red-800 mb-4">⚠️ Multa por Retraso</h4>
+            <div class="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-red-700 font-medium">Días de retraso:</p>
+                    <p id="info-dias-retraso" class="text-gray-700 font-bold">0 días</p>
+                </div>
+                <div>
+                    <p class="text-red-700 font-medium">Multa calculada:</p>
+                    <p id="info-multa-total" class="text-gray-700 font-bold">$0</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-red-700 text-xs">
+                        <i data-lucide="alert-triangle" class="w-3 h-3 inline mr-1"></i>
+                        Tarifa: $5 por día de retraso. El usuario debe pagar esta multa antes de realizar nuevos préstamos.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón de Registro -->
+        <div class="flex justify-center md:col-span-2">
+            <button type="submit" id="btn-registrar-devolucion" 
+                class="btn-primary w-full md:w-1/2 py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="book-check" class="w-5 h-5 mr-2"></i>
+                Registrar Devolución
+            </button>
+        </div>
+    </form>
+    
+    <!-- Mensaje de resultado -->
+    <div id="devolucion-message" class="mt-4 text-center text-lg font-medium hidden"></div>
+</section>
+
+<!-- Modal de Confirmación de Devolución -->
+<div id="modal-confirmacion-devolucion" class="modal-overlay hidden">
+    <div class="modal-content max-w-md">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="book-check" class="w-8 h-8 text-green-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Confirmar Devolución</h3>
+            <p class="text-gray-600 mb-6">¿Estás seguro de que deseas registrar esta devolución?</p>
+            
+            <div class="bg-gray-50 p-4 rounded-lg mb-6 text-left">
+                <h4 class="font-semibold text-gray-800 mb-2">Resumen de la Devolución:</h4>
+                <div class="space-y-1 text-sm">
+                    <p><span class="font-medium">Libro:</span> <span id="confirmar-devolucion-libro">-</span></p>
+                    <p><span class="font-medium">Usuario:</span> <span id="confirmar-devolucion-usuario">-</span></p>
+                    <p><span class="font-medium">Fecha de préstamo:</span> <span id="confirmar-devolucion-fecha-prestamo">-</span></p>
+                    <p><span class="font-medium">Fecha de devolución:</span> <span id="confirmar-devolucion-fecha">-</span></p>
+                    <div id="confirmar-multa-container" class="hidden">
+                        <p><span class="font-medium text-red-600">Multa por retraso:</span> <span id="confirmar-devolucion-multa">-</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center space-x-4">
+                <button type="button" id="btn-cancelar-devolucion" 
+                    class="btn-secondary px-6 py-2">
+                    Cancelar
+                </button>
+                <button type="button" id="btn-confirmar-devolucion" 
+                    class="btn-primary px-6 py-2">
+                    <i data-lucide="check" class="w-4 h-4 mr-2"></i>
+                    Confirmar Devolución
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Script específico para devoluciones
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📚 Inicializando formulario de devoluciones...');
+    
+    // Inicializar componentes
+    initDevolucion();
+});
+
+function initDevolucion() {
+    // Configurar formulario
+    const formDevolucion = document.getElementById('form-devolucion');
+    if (formDevolucion) {
+        formDevolucion.addEventListener('submit', manejarEnvioDevolucion);
+    }
+
+    // Configurar validación en tiempo real
+    configurarValidacionDevolucion();
+
+    // Configurar búsqueda de libros y usuarios
+    configurarBusquedasDevolucion();
+
+    // Configurar modal de confirmación
+    configurarModalConfirmacionDevolucion();
+}
+
+function configurarValidacionDevolucion() {
+    // Validación en tiempo real para campos requeridos
+    const camposRequeridos = document.querySelectorAll('#form-devolucion input[required]');
+    camposRequeridos.forEach(campo => {
+        campo.addEventListener('blur', validarCampoDevolucion);
+        campo.addEventListener('input', limpiarValidacionCampoDevolucion);
+    });
+}
+
+function validarCampoDevolucion(e) {
+    const campo = e.target;
+    const valor = campo.value.trim();
+    const contenedor = campo.parentElement;
+    const mensaje = contenedor.querySelector('.validation-message');
+
+    // Limpiar estado previo
+    campo.classList.remove('input-error', 'input-success');
+    if (mensaje) mensaje.classList.add('hidden');
+
+    if (!valor && campo.required) {
+        mostrarErrorCampoDevolucion(campo, 'Este campo es obligatorio');
+        return false;
+    }
+
+    // Si pasa la validación
+    campo.classList.add('input-success');
+    return true;
+}
+
+function mostrarErrorCampoDevolucion(campo, mensajeTexto) {
+    campo.classList.add('input-error');
+    const contenedor = campo.parentElement;
+    const mensaje = contenedor.querySelector('.validation-message');
+    
+    if (mensaje) {
+        mensaje.textContent = mensajeTexto;
+        mensaje.className = 'validation-message validation-error text-sm mt-1';
+        mensaje.classList.remove('hidden');
+    }
+}
+
+function limpiarValidacionCampoDevolucion(e) {
+    const campo = e.target;
+    campo.classList.remove('input-error', 'input-success');
+    
+    const contenedor = campo.parentElement;
+    const mensaje = contenedor.querySelector('.validation-message');
+    if (mensaje) {
+        mensaje.classList.add('hidden');
+    }
+}
+
+function configurarBusquedasDevolucion() {
+    // Búsqueda de libros
+    const inputTitulo = document.getElementById('devolucion-titulo');
+    if (inputTitulo) {
+        let timeout;
+        inputTitulo.addEventListener('input', function(e) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                const query = e.target.value.trim();
+                if (query.length >= 2) {
+                    buscarLibrosDevolucion(query);
+                } else {
+                    ocultarSugerenciasDevolucion();
+                    limpiarInformacionPrestamo();
+                }
+            }, 300);
+        });
+    }
+
+    // Búsqueda de usuarios
+    const inputUsuario = document.getElementById('devolucion-usuario');
+    if (inputUsuario) {
+        let timeout;
+        inputUsuario.addEventListener('input', function(e) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                const query = e.target.value.trim();
+                if (query.length >= 2) {
+                    buscarUsuariosDevolucion(query);
+                } else {
+                    ocultarSugerenciasUsuario();
+                    limpiarInformacionUsuario();
+                }
+            }, 300);
+        });
+    }
+
+    // Ocultar sugerencias al hacer click fuera
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#devolucion-titulo') && !e.target.closest('#sugerencias-devolucion')) {
+            ocultarSugerenciasDevolucion();
+        }
+        if (!e.target.closest('#devolucion-usuario') && !e.target.closest('#sugerencias-usuario')) {
+            ocultarSugerenciasUsuario();
+        }
+    });
+}
+
+async function buscarLibrosDevolucion(query) {
+    const sugerencias = document.getElementById('sugerencias-devolucion');
+    const estadoPrestamo = document.getElementById('estado-prestamo');
+
+    if (!sugerencias) return;
+
+    try {
+        const response = await fetch(`/api/libros/buscar?q=${encodeURIComponent(query)}`);
+        const result = await response.json();
+        
+        if (result.estado === 'ok' && result.libros.length > 0) {
+            mostrarSugerenciasLibrosDevolucion(result.libros, sugerencias);
+            sugerencias.classList.remove('hidden');
+        } else {
+            ocultarSugerenciasDevolucion();
+            if (estadoPrestamo && query.length >= 2) {
+                estadoPrestamo.innerHTML = '<span class="text-red-500">❌ No se encontraron libros con ese título</span>';
+                estadoPrestamo.classList.remove('hidden');
+            }
+        }
+    } catch (error) {
+        console.error('Error buscando libros:', error);
+        ocultarSugerenciasDevolucion();
+    }
+}
+
+function mostrarSugerenciasLibrosDevolucion(libros, contenedor) {
+    contenedor.innerHTML = libros.map(libro => `
+        <div class="sugerencia-item libro-sugerencia-devolucion" 
+             data-titulo="${libro.titulo}" 
+             data-isbn="${libro.isbn || ''}">
+            <div class="font-medium">${libro.titulo}</div>
+            <div class="text-sm text-gray-600">${libro.autor}</div>
+            <div class="text-xs ${libro.disponible ? 'text-green-600' : 'text-red-600'}">
+                ${libro.disponible ? '✅ Disponible en biblioteca' : '❌ Actualmente prestado'}
+            </div>
+        </div>
+    `).join('');
+
+    // Agregar event listeners a las sugerencias
+    document.querySelectorAll('.libro-sugerencia-devolucion').forEach(element => {
+        element.addEventListener('click', function() {
+            seleccionarLibroDevolucion(this);
+        });
+    });
+}
+
+function seleccionarLibroDevolucion(element) {
+    const titulo = element.getAttribute('data-titulo');
+    const isbn = element.getAttribute('data-isbn');
+    
+    // Actualizar campos del formulario
+    document.getElementById('devolucion-titulo').value = titulo;
+    document.getElementById('devolucion-isbn').value = isbn;
+    
+    // Buscar préstamos activos para este libro
+    buscarPrestamosActivos(titulo);
+    
+    ocultarSugerenciasDevolucion();
+}
+
+async function buscarUsuariosDevolucion(query) {
+    const sugerencias = document.getElementById('sugerencias-usuario');
+    const infoUsuario = document.getElementById('info-usuario');
+
+    if (!sugerencias) return;
+
+    try {
+        // Buscar usuario por número de estudiante o nombre
+        const response = await fetch(`/api/usuarios/${encodeURIComponent(query)}`);
+        const result = await response.json();
+        
+        if (result.estado === 'ok' && result.usuario) {
+            mostrarSugerenciaUsuario(result.usuario, sugerencias);
+            sugerencias.classList.remove('hidden');
+        } else {
+            // Si no se encuentra por API, mostrar búsqueda genérica
+            mostrarSugerenciasUsuariosGenerico(query, sugerencias);
+        }
+    } catch (error) {
+        console.error('Error buscando usuario:', error);
+        mostrarSugerenciasUsuariosGenerico(query, sugerencias);
+    }
+}
+
+function mostrarSugerenciaUsuario(usuario, contenedor) {
+    const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`;
+    contenedor.innerHTML = `
+        <div class="sugerencia-item usuario-sugerencia" 
+             data-usuario-id="${usuario.id}"
+             data-numero-estudiante="${usuario.numero_estudiante}"
+             data-nombre="${nombreCompleto}">
+            <div class="font-medium">${nombreCompleto}</div>
+            <div class="text-sm text-gray-600">${usuario.numero_estudiante}</div>
+            <div class="text-xs text-blue-600">${usuario.carrera || 'Sin carrera especificada'}</div>
+        </div>
+    `;
+
+    // Agregar event listener
+    document.querySelectorAll('.usuario-sugerencia').forEach(element => {
+        element.addEventListener('click', function() {
+            seleccionarUsuarioDevolucion(this);
+        });
+    });
+}
+
+function mostrarSugerenciasUsuariosGenerico(query, contenedor) {
+    contenedor.innerHTML = `
+        <div class="sugerencia-item usuario-sugerencia-generico" 
+             data-usuario-query="${query}">
+            <div class="font-medium">Buscar: "${query}"</div>
+            <div class="text-sm text-gray-600">Presiona Enter para buscar préstamos</div>
+        </div>
+    `;
+
+    // Agregar event listener
+    document.querySelectorAll('.usuario-sugerencia-generico').forEach(element => {
+        element.addEventListener('click', function() {
+            const query = this.getAttribute('data-usuario-query');
+            buscarPrestamosPorUsuario(query);
+        });
+    });
+}
+
+function seleccionarUsuarioDevolucion(element) {
+    const numeroEstudiante = element.getAttribute('data-numero-estudiante');
+    const nombre = element.getAttribute('data-nombre');
+    
+    // Actualizar campo del formulario
+    document.getElementById('devolucion-usuario').value = numeroEstudiante;
+    
+    // Mostrar información del usuario
+    const infoUsuario = document.getElementById('info-usuario');
+    infoUsuario.innerHTML = `<span class="text-green-600">✅ Usuario: ${nombre}</span>`;
+    infoUsuario.classList.remove('hidden');
+    
+    // Buscar préstamos activos para este usuario
+    buscarPrestamosActivosPorUsuario(numeroEstudiante);
+    
+    ocultarSugerenciasUsuario();
+}
+
+async function buscarPrestamosActivos(tituloLibro) {
+    const estadoPrestamo = document.getElementById('estado-prestamo');
+    const infoPrestamo = document.getElementById('info-prestamo-activo');
+    
+    if (!tituloLibro) return;
+
+    try {
+        // En una implementación real, aquí llamarías a la API para buscar préstamos activos
+        // Por ahora simulamos la búsqueda
+        
+        estadoPrestamo.innerHTML = '<span class="text-blue-600">🔍 Buscando préstamos activos...</span>';
+        estadoPrestamo.classList.remove('hidden');
+        
+        // Simular delay de búsqueda
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Simular que encontramos un préstamo (en realidad esto vendría de la API)
+        const prestamoEncontrado = simularPrestamoEncontrado(tituloLibro);
+        
+        if (prestamoEncontrado) {
+            estadoPrestamo.innerHTML = '<span class="text-green-600">✅ Préstamo activo encontrado</span>';
+            mostrarInformacionPrestamo(prestamoEncontrado);
+            
+            // Calcular y mostrar multa si aplica
+            calcularYMostrarMulta(prestamoEncontrado);
+        } else {
+            estadoPrestamo.innerHTML = '<span class="text-red-600">❌ No se encontraron préstamos activos para este libro</span>';
+            infoPrestamo.classList.add('hidden');
+            document.getElementById('info-multa').classList.add('hidden');
+        }
+        
+    } catch (error) {
+        console.error('Error buscando préstamos:', error);
+        estadoPrestamo.innerHTML = '<span class="text-red-600">❌ Error al buscar préstamos</span>';
+    }
+}
+
+async function buscarPrestamosActivosPorUsuario(numeroEstudiante) {
+    const infoUsuario = document.getElementById('info-usuario');
+    
+    if (!numeroEstudiante) return;
+
+    try {
+        infoUsuario.innerHTML = '<span class="text-blue-600">🔍 Buscando préstamos del usuario...</span>';
+        
+        // Simular delay de búsqueda
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Simular que encontramos préstamos (en realidad esto vendría de la API)
+        const prestamosUsuario = simularPrestamosUsuario(numeroEstudiante);
+        
+        if (prestamosUsuario.length > 0) {
+            infoUsuario.innerHTML = `<span class="text-green-600">✅ Usuario tiene ${prestamosUsuario.length} préstamo(s) activo(s)</span>`;
+            // Aquí podrías mostrar una lista de préstamos para seleccionar
+        } else {
+            infoUsuario.innerHTML = '<span class="text-yellow-600">ℹ️ Usuario no tiene préstamos activos</span>';
+        }
+        
+    } catch (error) {
+        console.error('Error buscando préstamos del usuario:', error);
+        infoUsuario.innerHTML = '<span class="text-red-600">❌ Error al buscar préstamos del usuario</span>';
+    }
+}
+
+function simularPrestamoEncontrado(tituloLibro) {
+    // Simular datos de un préstamo activo
+    // En una implementación real, esto vendría de la API
+    const fechaPrestamo = new Date();
+    fechaPrestamo.setDate(fechaPrestamo.getDate() - 20); // Hace 20 días (5 días de retraso)
+    
+    const fechaLimite = new Date();
+    fechaLimite.setDate(fechaPrestamo.getDate() + 15); // 15 días después del préstamo
+    
+    return {
+        id: 1,
+        titulo: tituloLibro,
+        usuario: 'María González (2023001)',
+        fechaPrestamo: fechaPrestamo.toLocaleDateString('es-VE'),
+        fechaLimite: fechaLimite.toLocaleDateString('es-VE'),
+        diasRetraso: 5
+    };
+}
+
+function simularPrestamosUsuario(numeroEstudiante) {
+    // Simular lista de préstamos de un usuario
+    return [
+        {
+            id: 1,
+            titulo: 'Cien años de soledad',
+            fechaPrestamo: '2024-01-15',
+            fechaLimite: '2024-01-30'
+        },
+        {
+            id: 2,
+            titulo: 'La casa de los espíritus',
+            fechaPrestamo: '2024-01-20',
+            fechaLimite: '2024-02-04'
+        }
+    ];
+}
+
+function mostrarInformacionPrestamo(prestamo) {
+    const infoPrestamo = document.getElementById('info-prestamo-activo');
+    
+    document.getElementById('info-libro-titulo').textContent = prestamo.titulo;
+    document.getElementById('info-usuario-nombre').textContent = prestamo.usuario;
+    document.getElementById('info-fecha-prestamo').textContent = prestamo.fechaPrestamo;
+    document.getElementById('info-fecha-limite').textContent = prestamo.fechaLimite;
+    
+    const estadoElement = document.getElementById('info-estado-prestamo');
+    if (prestamo.diasRetraso > 0) {
+        estadoElement.innerHTML = `<span class="text-red-600 font-semibold">⚠️ En retraso (${prestamo.diasRetraso} días)</span>`;
+    } else {
+        estadoElement.innerHTML = '<span class="text-green-600">✅ Al día</span>';
+    }
+    
+    infoPrestamo.classList.remove('hidden');
+}
+
+function calcularYMostrarMulta(prestamo) {
+    const infoMulta = document.getElementById('info-multa');
+    
+    if (prestamo.diasRetraso > 0) {
+        const multaTotal = prestamo.diasRetraso * 5; // $5 por día
+        
+        document.getElementById('info-dias-retraso').textContent = `${prestamo.diasRetraso} días`;
+        document.getElementById('info-multa-total').textContent = `$${multaTotal}`;
+        
+        infoMulta.classList.remove('hidden');
+    } else {
+        infoMulta.classList.add('hidden');
+    }
+}
+
+function limpiarInformacionPrestamo() {
+    document.getElementById('info-prestamo-activo').classList.add('hidden');
+    document.getElementById('info-multa').classList.add('hidden');
+    document.getElementById('estado-prestamo').classList.add('hidden');
+}
+
+function limpiarInformacionUsuario() {
+    document.getElementById('info-usuario').classList.add('hidden');
+}
+
+function ocultarSugerenciasDevolucion() {
+    const sugerencias = document.getElementById('sugerencias-devolucion');
+    if (sugerencias) {
+        sugerencias.classList.add('hidden');
+    }
+}
+
+function ocultarSugerenciasUsuario() {
+    const sugerencias = document.getElementById('sugerencias-usuario');
+    if (sugerencias) {
+        sugerencias.classList.add('hidden');
+    }
+}
+
+function configurarModalConfirmacionDevolucion() {
+    const btnCancelar = document.getElementById('btn-cancelar-devolucion');
+    const btnConfirmar = document.getElementById('btn-confirmar-devolucion');
+    
+    if (btnCancelar) {
+        btnCancelar.addEventListener('click', function() {
+            document.getElementById('modal-confirmacion-devolucion').classList.add('hidden');
+        });
+    }
+    
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', confirmarDevolucion);
+    }
+
+    // Cerrar modal con Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.getElementById('modal-confirmacion-devolucion').classList.add('hidden');
+        }
+    });
+}
+
+function manejarEnvioDevolucion(e) {
+    e.preventDefault();
+    console.log('📝 Procesando devolución...');
+    
+    // Validar formulario
+    if (!validarFormularioDevolucionCompleto()) {
+        mostrarMensajeDevolucion('Por favor completa todos los campos obligatorios correctamente', 'error');
+        return;
+    }
+
+    // Verificar que se encontró un préstamo activo
+    const infoPrestamo = document.getElementById('info-prestamo-activo');
+    if (infoPrestamo.classList.contains('hidden')) {
+        mostrarMensajeDevolucion('No se encontró un préstamo activo con los datos proporcionados', 'error');
+        return;
+    }
+
+    // Mostrar modal de confirmación
+    mostrarModalConfirmacionDevolucion();
+}
+
+function validarFormularioDevolucionCompleto() {
+    let valido = true;
+    
+    // Validar campos requeridos
+    const camposRequeridos = document.querySelectorAll('#form-devolucion input[required]');
+    camposRequeridos.forEach(campo => {
+        if (!campo.value.trim()) {
+            mostrarErrorCampoDevolucion(campo, 'Este campo es obligatorio');
+            valido = false;
+        }
+    });
+
+    return valido;
+}
+
+function mostrarModalConfirmacionDevolucion() {
+    // Obtener datos del formulario y del préstamo
+    const titulo = document.getElementById('devolucion-titulo').value;
+    const usuario = document.getElementById('devolucion-usuario').value;
+    const fechaPrestamo = document.getElementById('info-fecha-prestamo').textContent;
+    
+    const fechaDevolucion = new Date().toLocaleDateString('es-VE');
+    const diasRetraso = parseInt(document.getElementById('info-dias-retraso').textContent) || 0;
+    const multa = document.getElementById('info-multa-total').textContent;
+    
+    // Actualizar modal
+    document.getElementById('confirmar-devolucion-libro').textContent = titulo;
+    document.getElementById('confirmar-devolucion-usuario').textContent = usuario;
+    document.getElementById('confirmar-devolucion-fecha-prestamo').textContent = fechaPrestamo;
+    document.getElementById('confirmar-devolucion-fecha').textContent = fechaDevolucion;
+    
+    // Mostrar multa si aplica
+    const multaContainer = document.getElementById('confirmar-multa-container');
+    if (diasRetraso > 0) {
+        document.getElementById('confirmar-devolucion-multa').textContent = multa;
+        multaContainer.classList.remove('hidden');
+    } else {
+        multaContainer.classList.add('hidden');
+    }
+    
+    // Mostrar modal
+    document.getElementById('modal-confirmacion-devolucion').classList.remove('hidden');
+}
+
+async function confirmarDevolucion() {
+    console.log('✅ Confirmando devolución...');
+    
+    // Obtener datos del formulario
+    const formData = new FormData(document.getElementById('form-devolucion'));
+    const datos = Object.fromEntries(formData);
+    
+    // Mostrar loading
+    const btnConfirmar = document.getElementById('btn-confirmar-devolucion');
+    const btnOriginal = btnConfirmar.innerHTML;
+    btnConfirmar.innerHTML = '<div class="spinner-small mx-auto"></div> Procesando...';
+    btnConfirmar.disabled = true;
+    
+    try {
+        const response = await fetch('/api/registrar-devolucion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(datos)
+        });
+
+        const result = await response.json();
+        
+        if (result.estado === 'ok') {
+            // Éxito
+            mostrarMensajeDevolucion('✅ ' + result.mensaje, 'success');
+            document.getElementById('modal-confirmacion-devolucion').classList.add('hidden');
+            document.getElementById('form-devolucion').reset();
+            limpiarInformacionPrestamo();
+            limpiarInformacionUsuario();
+            
+            // Mostrar información de multa si aplica
+            if (result.multa > 0) {
+                setTimeout(() => {
+                    mostrarMensajeDevolucion(`Multa aplicada: $${result.multa} (${result.dias_retraso} días de retraso)`, 'warning', 8000);
+                }, 2000);
+            }
+        } else {
+            // Error
+            throw new Error(result.mensaje);
+        }
+        
+    } catch (error) {
+        console.error('Error registrando devolución:', error);
+        mostrarMensajeDevolucion('❌ ' + error.message, 'error');
+    } finally {
+        // Restaurar botón
+        btnConfirmar.innerHTML = btnOriginal;
+        btnConfirmar.disabled = false;
+    }
+}
+
+function mostrarMensajeDevolucion(mensaje, tipo = 'info', duracion = 5000) {
+    const mensajeElement = document.getElementById('devolucion-message');
+    if (!mensajeElement) return;
+
+    mensajeElement.textContent = mensaje;
+    mensajeElement.className = `mt-4 text-center text-lg font-medium p-4 rounded-lg fade-in ${
+        tipo === 'success' ? 'message-success' :
+        tipo === 'error' ? 'message-error' :
+        tipo === 'warning' ? 'message-warning' :
+        'bg-blue-500 text-white'
+    }`;
+    mensajeElement.classList.remove('hidden');
+
+    // Auto-remover después de la duración
+    setTimeout(() => {
+        mensajeElement.classList.add('hidden');
+    }, duracion);
+}
+
+// Inicializar íconos
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+});
+</script>
+
+<style>
+.spinner-small {
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.sugerencias-container {
+    position: absolute;
+    z-index: 10;
+    width: 100%;
+    margin-top: 0.25rem;
+    background-color: white;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    max-height: 15rem;
+    overflow-y: auto;
+}
+
+.sugerencia-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f3f4f6;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.sugerencia-item:hover {
+    background-color: #eff6ff;
+}
+
+.sugerencia-item:last-child {
+    border-bottom: none;
+}
+
+.validation-error {
+    color: #ef4444;
+}
+
+.validation-success {
+    color: #10b981;
+}
+
+.input-error {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2;
+}
+
+.input-success {
+    border-color: #10b981 !important;
+    background-color: #f0fdf4;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BIBLIOTECA - Sistema de Gestión{% endblock %}</title>
+    <!-- Carga de Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Lucide Icons (para íconos como flechas) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="smooth-scroll">
+    <!-- Contenedor Principal de la Aplicación -->
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- BARRA DE NAVEGACIÓN (HEADER) -->
+        <header class="bg-white shadow-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                
+                <!-- Logo y Título -->
+                <div class="flex items-center space-x-3">   
+                    <img 
+                      class="w-12 h-12 rounded-full object-cover border-2 border-gray-200 hover-lift"
+                      src="{{ url_for('static', filename='img/LogoPSM.png') }}" 
+                      alt="Logo Biblioteca Dr. Jose Gil Alfonzo" 
+                    />
+                    <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight">DR. Jose Gil Alfonzo</h1>
+                </div>
+
+                <!-- Enlaces de Navegación -->
+                <nav class="flex items-center space-x-6">
+                    <a href="{{ url_for('inicio') }}" 
+                       class="nav-link focus-visible {% if request.path == url_for('inicio') %}nav-link-active{% endif %}">
+                        Inicio
+                    </a>
+                    <a href="{{ url_for('catalogo') }}" 
+                       class="nav-link focus-visible {% if request.path == url_for('catalogo') %}nav-link-active{% endif %}">
+                        Catálogo
+                    </a>
+                    <a href="{{ url_for('servicios') }}" 
+                       class="nav-link focus-visible {% if request.path == url_for('servicios') %}nav-link-active{% endif %}">
+                        Servicios
+                    </a>
+                    <a href="{{ url_for('prestamo') }}" 
+                       class="btn-primary focus-visible {% if request.path == url_for('prestamo') %}nav-link-active{% endif %}">
+                        Registro de Préstamos
+                    </a>
+                    <a href="{{ url_for('devolucion') }}" 
+                       class="nav-link focus-visible hidden lg:block {% if request.path == url_for('devolucion') %}nav-link-active{% endif %}">
+                        Registro de Devoluciones
+                    </a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Contenido Principal -->
+        <main class="flex-grow pt-10 pb-12 page-transition">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="bg-white py-4 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
+                Grupo #2 PSM Caracas
+            </div>
+        </footer>
+    </div>
+
+    <!-- Notifications Container -->
+    <div id="notifications-container"></div>
+
+    <!-- Global Loading Indicator -->
+    <div id="global-loading" class="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50 hidden">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-gray-600">Cargando...</p>
+        </div>
+    </div>
+
+    <!-- Global Progress Bar -->
+    <div id="global-progress-bar" class="fixed top-0 left-0 w-full h-1 z-50 hidden">
+        <div class="progress-fill h-full bg-blue-500 transition-all duration-300" style="width: 0%"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+    <script>
+    // Scripts globales adicionales
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mejorar la experiencia de carga
+        window.addEventListener('beforeunload', function() {
+            document.getElementById('global-loading').classList.remove('hidden');
+        });
+
+        window.addEventListener('load', function() {
+            document.getElementById('global-loading').classList.add('hidden');
+        });
+
+        // Manejar enlaces externos
+        document.querySelectorAll('a[href^="http"]').forEach(link => {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+        });
+
+        // Mejorar accesibilidad del teclado
+        document.addEventListener('keydown', function(e) {
+            // Tecla Escape cierra modales
+            if (e.key === 'Escape') {
+                const openModal = document.querySelector('.modal-overlay:not(.hidden)');
+                if (openModal) {
+                    openModal.classList.add('hidden');
+                }
+            }
+        });
+
+        // Feedback táctil mejorado para móviles
+        if ('ontouchstart' in window) {
+            document.body.classList.add('touch-device');
+        }
+    });
+
+    // Función global para mostrar notificaciones
+    window.showGlobalNotification = function(message, type = 'info', duration = 5000) {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
+            type === 'success' ? 'message-success' :
+            type === 'error' ? 'message-error' :
+            type === 'warning' ? 'message-warning' :
+            'bg-blue-500 text-white'
+        }`;
+        
+        const icons = {
+            success: 'check-circle',
+            error: 'x-circle',
+            warning: 'alert-triangle',
+            info: 'info'
+        };
+
+        notification.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i data-lucide="${icons[type]}" class="w-5 h-5 mr-2"></i>
+                    <span class="text-sm">${message}</span>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" 
+                        class="ml-4 hover:opacity-70 focus-visible">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+        `;
+        
+        document.getElementById('notifications-container').appendChild(notification);
+        lucide.createIcons();
+        
+        // Auto-remover después de la duración
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateY(-10px)';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, duration);
+    };
+
+    // Función global para mostrar loading
+    window.showGlobalLoading = function(show = true) {
+        const loading = document.getElementById('global-loading');
+        const progress = document.getElementById('global-progress-bar');
+        
+        if (show) {
+            loading.classList.remove('hidden');
+            progress.classList.remove('hidden');
+            
+            // Simular progreso
+            let width = 0;
+            const interval = setInterval(() => {
+                width += Math.random() * 10;
+                if (width >= 90) {
+                    clearInterval(interval);
+                }
+                progress.querySelector('.progress-fill').style.width = width + '%';
+            }, 200);
+        } else {
+            loading.classList.add('hidden');
+            progress.querySelector('.progress-fill').style.width = '100%';
+            setTimeout(() => {
+                progress.classList.add('hidden');
+                progress.querySelector('.progress-fill').style.width = '0%';
+            }, 300);
+        }
+    };
+
+    // Función global para validar email
+    window.isValidEmail = function(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    };
+
+    // Función global para formato de fecha
+    window.formatDate = function(dateString) {
+        const options = { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit',
+            timeZone: 'America/Caracas'
+        };
+        return new Date(dateString).toLocaleDateString('es-VE', options);
+    };
+    </script>
+</body>
+</html>
