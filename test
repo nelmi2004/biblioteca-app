@@ -1,8 +1,0 @@
-from database import db
-
-result = db.execute_query("SELECT @@version as version")
-if result:
-    print("✅ Conexión exitosa a SQL Server")
-    print(f"Versión: {result[0]['version']}")
-else:
-    print("❌ Error de conexión")

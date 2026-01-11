@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil - Biblioteca{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Información del Perfil
+                </h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                    Detalles de tu cuenta y estadísticas personales
+                </p>
+            </div>
+            
+            <div class="border-t border-gray-200">
+                <dl>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">
+                            Nombre completo
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            {{ usuario.nombre_completo }}
+                        </dd>
+                    </div>
+                    
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">
+                            Nombre de usuario
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            {{ usuario.username }}
+                        </dd>
+                    </div>
+                    
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">
+                            Número de cédula
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            {{ usuario.numero_estudiante }}
+                        </dd>
+                    </div>
+                    
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">
+                            Email
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            {{ usuario.email or 'No especificado' }}
+                        </dd>
+                    </div>
+                    
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">
+                            Carrera
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            {{ usuario.carrera or 'No especificada' }}
+                        </dd>
+                    </div>
+                    
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">
+                            Fecha de registro
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            {{ usuario.fecha_creacion.strftime('%d/%m/%Y') if usuario.fecha_creacion else 'No disponible' }}
+                        </dd>
+                    </div>
+                    
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">
+                            Rol
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {{ 'bg-green-100 text-green-800' if usuario.es_administrador else 'bg-blue-100 text-blue-800' }}">
+                                {{ 'Administrador' if usuario.es_administrador else 'Usuario' }}
+                            </span>
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+        
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Estadísticas del usuario -->
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Estadísticas
+                    </h3>
+                </div>
+                <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+                    <dl class="sm:divide-y sm:divide-gray-200">
+                        <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt class="text-sm font-medium text-gray-500">
+                                Préstamos activos
+                            </dt>
+                            <dd id="prestamos-activos" class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                Cargando...
+                            </dd>
+                        </div>
+                        
+                        <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt class="text-sm font-medium text-gray-500">
+                                Historial total
+                            </dt>
+                            <dd id="total-prestamos" class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                Cargando...
+                            </dd>
+                        </div>
+                        
+                        <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt class="text-sm font-medium text-gray-500">
+                                Multas pendientes
+                            </dt>
+                            <dd id="multas-pendientes" class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                Cargando...
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+            
+            <!-- Acciones rápidas -->
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Acciones
+                    </h3>
+                </div>
+                <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+                    <div class="space-y-4 px-4 py-5 sm:px-6">
+                        <a href="{{ url_for('cambiar_password') }}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i data-lucide="lock" class="mr-2 h-4 w-4"></i>
+                            Cambiar Contraseña
+                        </a>
+                        
+                        <a href="/catalogo"
+                           class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i data-lucide="book" class="mr-2 h-4 w-4"></i>
+                            Ver Catálogo
+                        </a>
+                        
+                        <a href="/prestamo"
+                           class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i data-lucide="book-open" class="mr-2 h-4 w-4"></i>
+                            Nuevo Préstamo
+                        </a>
+                        
+                        <button onclick="logout()"
+                                class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            <i data-lucide="log-out" class="mr-2 h-4 w-4"></i>
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function logout() {
+    try {
+        const response = await fetch('/logout');
+        window.location.href = '/login';
+    } catch (error) {
+        console.error('Error cerrando sesión:', error);
+    }
+}
+
+async function cargarEstadisticas() {
+    try {
+        const response = await fetch('/api/prestamos/usuario/{{ usuario.numero_estudiante }}');
+        const result = await response.json();
+        
+        if (result.estado === 'ok') {
+            document.getElementById('prestamos-activos').textContent = result.total;
+            
+            // Aquí puedes agregar más llamadas a la API para obtener más estadísticas
+            // Por ahora solo mostramos los préstamos activos
+        }
+    } catch (error) {
+        console.error('Error cargando estadísticas:', error);
+        document.getElementById('prestamos-activos').textContent = 'Error al cargar';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+    cargarEstadisticas();
+});
+</script>
+{% endblock %}

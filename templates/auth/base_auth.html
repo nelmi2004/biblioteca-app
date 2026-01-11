@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Biblioteca - Sistema de Gestión{% endblock %}</title>
+    <!-- Carga de Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #f9fafb;
+        }
+        .btn-primary {
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+        input:focus {
+            outline: none;
+            ring: 2px;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased">
+    {% block content %}{% endblock %}
+    
+    <script>
+    // Scripts globales para páginas de auth
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar íconos
+        lucide.createIcons();
+        
+        // Prevenir envío de formularios con Enter fuera de inputs
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+            }
+        });
+    });
+    </script>
+</body>
+</html>

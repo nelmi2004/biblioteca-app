@@ -1,0 +1,1583 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- SECCIÓN DE GESTIÓN DE PRÉSTAMOS -->
+<section class="content-card bg-blue-50/70 p-10">
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-4xl font-bold text-gray-800">Gestión de Préstamos</h2>
+        <div class="flex items-center space-x-4">
+            <!-- Botón para ver historial -->
+            <a href="/historial-prestamos" class="btn-secondary flex items-center">
+                <i data-lucide="history" class="w-4 h-4 mr-2"></i>
+                Historial
+            </a>
+            <!-- Botón para exportar -->
+            <button id="btn-exportar" class="btn-primary flex items-center">
+                <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                Exportar
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabs para filtrar préstamos -->
+    <div class="mb-6">
+        <div class="flex border-b">
+            <button id="tab-pendientes" class="tab-activo px-6 py-3 font-medium text-lg">
+                <i data-lucide="clock" class="w-5 h-5 mr-2 inline"></i>
+                Pendientes de Aprobación
+                <span id="contador-pendientes" class="ml-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full"></span>
+            </button>
+            <button id="tab-activos" class="tab-inactivo px-6 py-3 font-medium text-lg">
+                <i data-lucide="book-check" class="w-5 h-5 mr-2 inline"></i>
+                Préstamos Activos
+                <span id="contador-activos" class="ml-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full"></span>
+            </button>
+            <button id="tab-devuelto" class="tab-inactivo px-6 py-3 font-medium text-lg">
+                <i data-lucide="check-circle" class="w-5 h-5 mr-2 inline"></i>
+                Devueltos
+                <span id="contador-devuelto" class="ml-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Barra de búsqueda y filtros -->
+    <div class="bg-white p-4 rounded-lg shadow mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Búsqueda por estudiante o libro -->
+            <div class="relative">
+                <i data-lucide="search" class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" 
+                       id="buscar-prestamo" 
+                       placeholder="Buscar por estudiante, libro o código..." 
+                       class="form-input pl-10 w-full focus-visible"
+                       autocomplete="off">
+            </div>
+            
+            <!-- Filtro por fecha -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de solicitud:</label>
+                <select id="filtro-fecha" class="form-input w-full focus-visible">
+                    <option value="">Todas las fechas</option>
+                    <option value="hoy">Hoy</option>
+                    <option value="semana">Esta semana</option>
+                    <option value="mes">Este mes</option>
+                    <option value="personalizado">Personalizado</option>
+                </select>
+            </div>
+            
+            <!-- Filtro por estado -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Estado:</label>
+                <select id="filtro-estado" class="form-input w-full focus-visible">
+                    <option value="">Todos los estados</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="aprobado">Aprobado</option>
+                    <option value="rechazado">Rechazado</option>
+                    <option value="activo">Activo</option>
+                    <option value="devuelto">Devuelto</option>
+                    <option value="atrasado">Atrasado</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Fechas personalizadas (oculto por defecto) -->
+        <div id="fechas-personalizadas" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Desde:</label>
+                <input type="date" id="fecha-desde" class="form-input w-full focus-visible">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Hasta:</label>
+                <input type="date" id="fecha-hasta" class="form-input w-full focus-visible">
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor de préstamos -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <!-- Cabecera de la tabla -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <div class="flex items-center">
+                                  <input type="checkbox" id="seleccionar-todos" class="rounded focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                                <span class="ml-2">Solicitud</span>
+                            </div>
+                        </th>
+                        
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Estudiante
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Libro
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Fechas
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Estado
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="lista-prestamos" class="bg-white divide-y divide-gray-200">
+                    <!-- Los préstamos se cargarán aquí dinámicamente -->
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="spinner mx-auto mb-4"></div>
+                            <p class="text-gray-600">Cargando préstamos...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Mensaje cuando no hay préstamos -->
+        <div id="sin-prestamos" class="hidden p-12 text-center">
+            <i data-lucide="book-open-check" class="w-16 h-16 mx-auto mb-4 text-gray-300"></i>
+            <h3 class="text-xl font-semibold text-gray-400 mb-2">No hay préstamos pendientes</h3>
+            <p class="text-gray-500">Todos los préstamos han sido procesados.</p>
+        </div>
+        
+        <!-- Paginación -->
+        <div id="paginacion-prestamos" class="bg-gray-50 px-6 py-3 border-t border-gray-200 hidden">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Mostrando <span id="inicio-resultados">1</span> a <span id="fin-resultados">10</span> de <span id="total-resultados">0</span> préstamos
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="pagina-anterior" class="btn-secondary px-3 py-1">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                    </button>
+                    <div class="flex items-center space-x-1" id="numeros-pagina"></div>
+                    <button id="pagina-siguiente" class="btn-secondary px-3 py-1">
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Acciones masivas -->
+    <div id="acciones-masivas" class="mt-6 bg-blue-50 p-4 rounded-lg shadow hidden">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i data-lucide="check-square" class="w-5 h-5 text-blue-600 mr-2"></i>
+                <span id="cantidad-seleccionados" class="font-medium text-blue-700">0 préstamos seleccionados</span>
+            </div>
+            <div class="flex space-x-3">
+                <button id="aprobar-masivo" class="btn-success flex items-center">
+                    <i data-lucide="check" class="w-4 h-4 mr-2"></i>
+                    Aprobar Seleccionados
+                </button>
+                <button id="rechazar-masivo" class="btn-danger flex items-center">
+                    <i data-lucide="x" class="w-4 h-4 mr-2"></i>
+                    Rechazar Seleccionados
+                </button>
+                <button id="deseleccionar-todos" class="btn-secondary">
+                    <i data-lucide="x-square" class="w-4 h-4 mr-2"></i>
+                    Deseleccionar
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal de Aprobación - OCULTO POR DEFECTO -->
+<div id="modal-aprobacion" class="modal-overlay hidden">
+    <div class="modal-content max-w-md">
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-xl font-bold text-gray-800">Aprobar Préstamo</h3>
+            <button id="btn-cerrar-modal" class="text-gray-400 hover:text-gray-600 focus-visible p-1 rounded">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <div class="mb-6">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-medium text-gray-700 mb-2">Detalles del Préstamo</h4>
+                <div id="detalles-prestamo" class="space-y-2 text-sm">
+                    <!-- Los detalles se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <label for="fecha-devolucion" class="block text-sm font-medium text-gray-700 mb-2">
+                Fecha Límite de Devolución
+            </label>
+            <input type="date" 
+                   id="fecha-devolucion" 
+                   class="form-input w-full focus-visible"
+                   min="{{ hoy }}">
+            <p class="text-xs text-gray-500 mt-1">La fecha debe ser al menos 7 días después de hoy</p>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Observaciones (opcional)</label>
+            <textarea id="observaciones-aprobacion" 
+                      rows="3" 
+                      placeholder="Notas adicionales sobre la aprobación..."
+                      class="form-input w-full focus-visible"></textarea>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+            <button id="btn-cancelar-aprobacion" class="btn-secondary">
+                Cancelar
+            </button>
+            <button id="btn-confirmar-aprobacion" class="btn-success">
+                <i data-lucide="check" class="w-4 h-4 mr-2"></i>
+                Confirmar Aprobación
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Modal de Rechazo - OCULTO POR DEFECTO -->
+<div id="modal-rechazo" class="modal-overlay hidden">
+    <div class="modal-content max-w-md">
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-xl font-bold text-gray-800">Rechazar Préstamo</h3>
+            <button id="btn-cerrar-rechazo" class="text-gray-400 hover:text-gray-600 focus-visible p-1 rounded">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <div class="mb-6">
+            <div class="bg-red-50 p-4 rounded-lg border border-red-100">
+                <div class="flex items-center text-red-700 mb-2">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 mr-2"></i>
+                    <span class="font-medium">Esta acción no se puede deshacer</span>
+                </div>
+                <p class="text-sm text-red-600">El estudiante será notificado del rechazo de su solicitud.</p>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-medium text-gray-700 mb-2">Préstamo a Rechazar</h4>
+                <div id="detalles-rechazo" class="space-y-2 text-sm">
+                    <!-- Los detalles se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <label for="motivo-rechazo" class="block text-sm font-medium text-gray-700 mb-2">
+                Motivo del Rechazo *
+            </label>
+            <select id="motivo-rechazo" class="form-input w-full focus-visible" required>
+                <option value="">Selecciona un motivo</option>
+                <option value="libro_no_disponible">Libro no disponible</option>
+                <option value="limite_prestamos">Límite de préstamos alcanzado</option>
+                <option value="multas_pendientes">Multas pendientes</option>
+                <option value="informacion_incorrecta">Información incorrecta</option>
+                <option value="otro">Otro motivo</option>
+            </select>
+        </div>
+        
+        <div class="mb-6">
+            <label for="observaciones-rechazo" class="block text-sm font-medium text-gray-700 mb-2">
+                Observaciones adicionales
+            </label>
+            <textarea id="observaciones-rechazo" 
+                      rows="3" 
+                      placeholder="Explica brevemente el motivo del rechazo..."
+                      class="form-input w-full focus-visible"></textarea>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+            <button id="btn-cancelar-rechazo" class="btn-secondary">
+                Cancelar
+            </button>
+            <button id="btn-confirmar-rechazo" class="btn-danger">
+                <i data-lucide="x" class="w-4 h-4 mr-2"></i>
+                Confirmar Rechazo
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal de Detalles - OCULTO POR DEFECTO -->
+<div id="modal-detalles" class="modal-overlay hidden">
+    <div class="modal-content max-w-2xl">
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-xl font-bold text-gray-800">Detalles Completos del Préstamo</h3>
+            <button id="btn-cerrar-detalles" class="text-gray-400 hover:text-gray-600 focus-visible p-1 rounded">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <!-- Información del Estudiante -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-medium text-gray-700 mb-3 border-b pb-2">
+                    <i data-lucide="user" class="w-4 h-4 mr-2 inline"></i>
+                    Información del Estudiante
+                </h4>
+                <div id="info-estudiante" class="space-y-2 text-sm">
+                    <!-- Información del estudiante -->
+                </div>
+            </div>
+            
+            <!-- Información del Libro -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-medium text-gray-700 mb-3 border-b pb-2">
+                    <i data-lucide="book" class="w-4 h-4 mr-2 inline"></i>
+                    Información del Libro
+                </h4>
+                <div id="info-libro" class="space-y-2 text-sm">
+                    <!-- Información del libro -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Información del Préstamo -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+            <h4 class="font-medium text-gray-700 mb-3 border-b pb-2">
+                <i data-lucide="calendar" class="w-4 h-4 mr-2 inline"></i>
+                Información del Préstamo
+            </h4>
+            <div id="info-prestamo" class="space-y-2 text-sm">
+                <!-- Información del préstamo -->
+            </div>
+        </div>
+        
+        <!-- Historial de Estados -->
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-medium text-gray-700 mb-3 border-b pb-2">
+                <i data-lucide="history" class="w-4 h-4 mr-2 inline"></i>
+                Historial de Estados
+            </h4>
+            <div id="historial-estados" class="space-y-3">
+                <!-- Historial se cargará aquí -->
+            </div>
+        </div>
+        
+        <div class="mt-6 flex justify-end">
+            <button id="btn-cerrar-detalles-completo" class="btn-secondary">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variables globales
+let prestamos = [];
+let prestamosFiltrados = [];
+let paginaActual = 1;
+const PRESTAMOS_POR_PAGINA = 10;
+let prestamoSeleccionado = null;
+let prestamosSeleccionados = new Set();
+let tipoAccion = ''; // 'individual' o 'masivo'
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📚 Inicializando gestión de préstamos...');
+    
+    // Inicializar íconos
+    if (window.lucide && window.lucide.createIcons) {
+        lucide.createIcons();
+    }
+    
+    // Cargar préstamos pendientes
+    cargarPrestamosPendientes();
+    
+    // Configurar event listeners
+    configurarEventListeners();
+    
+    // Configurar filtro de fechas personalizadas
+    configurarFiltros();
+    
+    // Asegurar que los modales estén ocultos al cargar
+    asegurarModalesOcultos();
+});
+
+function asegurarModalesOcultos() {
+    // Ocultar todos los modales al cargar la página
+    document.getElementById('modal-aprobacion').classList.add('hidden');
+    document.getElementById('modal-rechazo').classList.add('hidden');
+    document.getElementById('modal-detalles').classList.add('hidden');
+}
+
+function configurarEventListeners() {
+    // Tabs
+    document.getElementById('tab-pendientes').addEventListener('click', () => cambiarTab('pendientes'));
+    document.getElementById('tab-activos').addEventListener('click', () => cambiarTab('activos'));
+    document.getElementById('tab-devuelto').addEventListener('click', () => cambiarTab('devuelto'));
+    
+    // Búsqueda
+    document.getElementById('buscar-prestamo').addEventListener('input', debounce(cargarPrestamosPendientes, 500));
+    
+    // Filtros
+    document.getElementById('filtro-fecha').addEventListener('change', manejarFiltroFecha);
+    document.getElementById('filtro-estado').addEventListener('change', cargarPrestamosPendientes);
+    
+    // Fechas personalizadas
+    document.getElementById('fecha-desde').addEventListener('change', cargarPrestamosPendientes);
+    document.getElementById('fecha-hasta').addEventListener('change', cargarPrestamosPendientes);
+    
+    // Selección masiva
+    document.getElementById('seleccionar-todos').addEventListener('change', seleccionarTodos);
+    
+    // Acciones masivas
+    document.getElementById('aprobar-masivo').addEventListener('click', () => abrirModalAprobacionMasiva());
+    document.getElementById('rechazar-masivo').addEventListener('click', () => abrirModalRechazoMasivo());
+    document.getElementById('deseleccionar-todos').addEventListener('click', deseleccionarTodos);
+    
+    // Paginación
+    document.getElementById('pagina-anterior').addEventListener('click', () => cambiarPagina(paginaActual - 1));
+    document.getElementById('pagina-siguiente').addEventListener('click', () => cambiarPagina(paginaActual + 1));
+    
+    // Modal de aprobación
+    document.getElementById('btn-cerrar-modal').addEventListener('click', cerrarModalAprobacion);
+    document.getElementById('btn-cancelar-aprobacion').addEventListener('click', cerrarModalAprobacion);
+    document.getElementById('btn-confirmar-aprobacion').addEventListener('click', confirmarAprobacion);
+    
+    // Modal de rechazo
+    document.getElementById('btn-cerrar-rechazo').addEventListener('click', cerrarModalRechazo);
+    document.getElementById('btn-cancelar-rechazo').addEventListener('click', cerrarModalRechazo);
+    document.getElementById('btn-confirmar-rechazo').addEventListener('click', confirmarRechazo);
+    
+    // Modal de detalles
+    document.getElementById('btn-cerrar-detalles').addEventListener('click', cerrarModalDetalles);
+    document.getElementById('btn-cerrar-detalles-completo').addEventListener('click', cerrarModalDetalles);
+    
+    // Exportar
+    document.getElementById('btn-exportar').addEventListener('click', exportarPrestamos);
+    
+    // Cerrar modales al hacer click fuera
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'modal-aprobacion') cerrarModalAprobacion();
+        if (e.target.id === 'modal-rechazo') cerrarModalRechazo();
+        if (e.target.id === 'modal-detalles') cerrarModalDetalles();
+    });
+    
+    // Cerrar modales con Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            cerrarModalAprobacion();
+            cerrarModalRechazo();
+            cerrarModalDetalles();
+        }
+    });
+}
+
+function configurarFiltros() {
+    const filtroFecha = document.getElementById('filtro-fecha');
+    const fechasPersonalizadas = document.getElementById('fechas-personalizadas');
+    
+    filtroFecha.addEventListener('change', function() {
+        if (this.value === 'personalizado') {
+            fechasPersonalizadas.classList.remove('hidden');
+        } else {
+            fechasPersonalizadas.classList.add('hidden');
+        }
+    });
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+async function cargarPrestamosPendientes() {
+    console.log('📋 Cargando préstamos pendientes...');
+    
+    const lista = document.getElementById('lista-prestamos');
+    lista.innerHTML = `
+        <tr>
+            <td colspan="6" class="px-6 py-12 text-center">
+                <div class="spinner mx-auto mb-4"></div>
+                <p class="text-gray-600">Cargando préstamos...</p>
+            </td>
+        </tr>
+    `;
+    
+    try {
+        const parametros = obtenerParametrosFiltro();
+        console.log('🔍 Parámetros de filtro:', parametros);
+        
+        const response = await fetch('/api/prestamos-pendientes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(parametros)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('✅ Préstamos recibidos:', result.prestamos ? result.prestamos.length : 0);
+        
+        if (result.estado === 'ok' && result.prestamos) {
+            prestamos = result.prestamos;
+            prestamosFiltrados = filtrarPrestamos(prestamos);
+            paginaActual = 1;
+            
+            actualizarContadores();
+            mostrarPrestamos();
+            actualizarPaginacion();
+        } else {
+            throw new Error(result.mensaje || 'Error al cargar préstamos');
+        }
+    } catch (error) {
+        console.error('❌ Error cargando préstamos:', error);
+        mostrarErrorCarga();
+    }
+}
+
+function obtenerParametrosFiltro() {
+    const buscar = document.getElementById('buscar-prestamo').value;
+    const filtroFecha = document.getElementById('filtro-fecha').value;
+    const filtroEstado = document.getElementById('filtro-estado').value;
+    const fechaDesde = document.getElementById('fecha-desde').value;
+    const fechaHasta = document.getElementById('fecha-hasta').value;
+    
+    return {
+        buscar: buscar,
+        filtroFecha: filtroFecha,
+        filtroEstado: filtroEstado,
+        fechaDesde: fechaDesde,
+        fechaHasta: fechaHasta,
+        tipo: 'pendiente' // Por defecto cargamos pendientes
+    };
+}
+
+function filtrarPrestamos(prestamos) {
+    let filtrados = [...prestamos];
+    
+    // Filtrar por búsqueda
+    const buscar = document.getElementById('buscar-prestamo').value.toLowerCase();
+    if (buscar) {
+        filtrados = filtrados.filter(p => 
+            (p.estudiante_nombre && p.estudiante_nombre.toLowerCase().includes(buscar)) ||
+            (p.libro_titulo && p.libro_titulo.toLowerCase().includes(buscar)) ||
+            (p.codigo_prestamo && String(p.codigo_prestamo).toLowerCase().includes(buscar)) ||
+            (p.estudiante_numero && p.estudiante_numero.toLowerCase().includes(buscar))
+        );
+    }
+    
+    // Filtrar por estado
+    const filtroEstado = document.getElementById('filtro-estado').value;
+    if (filtroEstado) {
+        filtrados = filtrados.filter(p => p.estado === filtroEstado);
+    }
+    
+    // Filtrar por fecha
+    const filtroFecha = document.getElementById('filtro-fecha').value;
+    if (filtroFecha && filtroFecha !== 'personalizado') {
+        const hoy = new Date();
+        filtrados = filtrados.filter(p => {
+            const fechaPrestamo = new Date(p.fecha_prestamo);
+            switch(filtroFecha) {
+                case 'hoy':
+                    return fechaPrestamo.toDateString() === hoy.toDateString();
+                case 'semana':
+                    const semanaPasada = new Date(hoy);
+                    semanaPasada.setDate(hoy.getDate() - 7);
+                    return fechaPrestamo >= semanaPasada;
+                case 'mes':
+                    const mesPasado = new Date(hoy);
+                    mesPasado.setMonth(hoy.getMonth() - 1);
+                    return fechaPrestamo >= mesPasado;
+                default:
+                    return true;
+            }
+        });
+    }
+    
+    // Filtrar por fechas personalizadas
+    if (filtroFecha === 'personalizado') {
+        const fechaDesde = document.getElementById('fecha-desde').value;
+        const fechaHasta = document.getElementById('fecha-hasta').value;
+        
+        if (fechaDesde) {
+            const desde = new Date(fechaDesde);
+            filtrados = filtrados.filter(p => new Date(p.fecha_prestamo) >= desde);
+        }
+        
+        if (fechaHasta) {
+            const hasta = new Date(fechaHasta);
+            hasta.setHours(23, 59, 59, 999);
+            filtrados = filtrados.filter(p => new Date(p.fecha_prestamo) <= hasta);
+        }
+    }
+    
+    return filtrados;
+}
+
+function mostrarPrestamos() {
+    const lista = document.getElementById('lista-prestamos');
+    const sinPrestamos = document.getElementById('sin-prestamos');
+    const paginacion = document.getElementById('paginacion-prestamos');
+    const accionesMasivas = document.getElementById('acciones-masivas');
+    
+    if (prestamosFiltrados.length === 0) {
+        lista.innerHTML = '';
+        lista.classList.add('hidden');
+        sinPrestamos.classList.remove('hidden');
+        paginacion.classList.add('hidden');
+        accionesMasivas.classList.add('hidden');
+        return;
+    }
+    
+    lista.classList.remove('hidden');
+    sinPrestamos.classList.add('hidden');
+    paginacion.classList.remove('hidden');
+    
+    // Calcular rango para la página actual
+    const inicio = (paginaActual - 1) * PRESTAMOS_POR_PAGINA;
+    const fin = Math.min(inicio + PRESTAMOS_POR_PAGINA, prestamosFiltrados.length);
+    const prestamosPagina = prestamosFiltrados.slice(inicio, fin);
+    
+    // Actualizar contadores de paginación
+    document.getElementById('inicio-resultados').textContent = inicio + 1;
+    document.getElementById('fin-resultados').textContent = fin;
+    document.getElementById('total-resultados').textContent = prestamosFiltrados.length;
+
+    console.log(`📄 Mostrando préstamos ${inicio + 1} a ${fin} de ${prestamosFiltrados.length}`);
+    
+    // Generar filas de la tabla
+    lista.innerHTML = prestamosPagina.map(prestamo => `
+        <tr class="hover:bg-gray-50" data-prestamo-id="${prestamo.id}">
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    {% if session.get('es_administrador') %}
+                    <input type="checkbox" 
+                           class="checkbox-prestamo rounded focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
+                           data-prestamo-id="${prestamo.id}"
+                           ${prestamosSeleccionados.has(prestamo.id) ? 'checked' : ''}>
+                    {% endif %}
+                    <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">${prestamo.codigo_prestamo || 'P-' + prestamo.id}</div>
+                        <div class="text-xs text-gray-500">${formatFecha(prestamo.fecha_prestamo)}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">${prestamo.estudiante_nombre || 'N/A'}</div>
+                <div class="text-xs text-gray-500">${prestamo.estudiante_numero || ''}</div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900">${prestamo.libro_titulo || 'N/A'}</div>
+                <div class="text-xs text-gray-500">${prestamo.libro_autor || ''}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">Solicitud: ${formatFecha(prestamo.fecha_prestamo)}</div>
+                ${prestamo.fecha_limite ? 
+                    `<div class="text-xs text-gray-500">Devolución: ${formatFecha(prestamo.fecha_limite)}</div>` : 
+                    '<div class="text-xs text-gray-500">Fecha de devolución pendiente</div>'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getEstadoClass(prestamo.estado)}">
+                    ${getEstadoTexto(prestamo.estado)}
+                </span>
+                ${prestamo.esta_atrasado ? 
+                    '<span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Atrasado</span>' : ''}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div class="flex items-center space-x-2">
+                    <button class="btn-ver-detalles text-blue-600 hover:text-blue-900" data-prestamo-id="${prestamo.id}">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                    {% if session.get('es_administrador') %}
+                    ${prestamo.estado === 'pendiente' ? `
+                        <button class="btn-aprobar text-green-600 hover:text-green-900" data-prestamo-id="${prestamo.id}">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                        </button>
+                        <button class="btn-rechazar text-red-600 hover:text-red-900" data-prestamo-id="${prestamo.id}">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    ` : ''}
+                    ${prestamo.estado === 'activo' ? `
+                        <button class="btn-marcar-devuelto text-purple-600 hover:text-purple-900" data-prestamo-id="${prestamo.id}">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        </button>
+                    ` : ''}
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    
+    // Actualizar íconos
+    if (window.lucide && window.lucide.createIcons) {
+        lucide.createIcons();
+    }
+    
+    // Configurar event listeners para los botones de cada fila
+    configurarEventListenersFilas();
+    
+    // Mostrar/ocultar acciones masivas
+    if (prestamosSeleccionados.size > 0) {
+        accionesMasivas.classList.remove('hidden');
+        document.getElementById('cantidad-seleccionados').textContent = 
+            `${prestamosSeleccionados.size} préstamo${prestamosSeleccionados.size > 1 ? 's' : ''} seleccionado${prestamosSeleccionados.size > 1 ? 's' : ''}`;
+    } else {
+        accionesMasivas.classList.add('hidden');
+    }
+}
+
+function configurarEventListenersFilas() {
+    // Checkboxes individuales
+    document.querySelectorAll('.checkbox-prestamo').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const prestamoId = parseInt(this.getAttribute('data-prestamo-id'));
+            if (this.checked) {
+                prestamosSeleccionados.add(prestamoId);
+            } else {
+                prestamosSeleccionados.delete(prestamoId);
+            }
+            actualizarSeleccionMasiva();
+        });
+    });
+    
+    // Botón ver detalles
+    document.querySelectorAll('.btn-ver-detalles').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const prestamoId = parseInt(this.getAttribute('data-prestamo-id'));
+            mostrarDetallesPrestamo(prestamoId);
+        });
+    });
+    
+    // Botón aprobar
+    document.querySelectorAll('.btn-aprobar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const prestamoId = parseInt(this.getAttribute('data-prestamo-id'));
+            abrirModalAprobacionIndividual(prestamoId);
+        });
+    });
+    
+    // Botón rechazar
+    document.querySelectorAll('.btn-rechazar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const prestamoId = parseInt(this.getAttribute('data-prestamo-id'));
+            abrirModalRechazoIndividual(prestamoId);
+        });
+    });
+    
+    // Botón marcar como devuelto
+    document.querySelectorAll('.btn-marcar-devuelto').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const prestamoId = parseInt(this.getAttribute('data-prestamo-id'));
+            marcarComoDevuelto(prestamoId);
+        });
+    });
+}
+
+function actualizarSeleccionMasiva() {
+    const seleccionarTodos = document.getElementById('seleccionar-todos');
+    const checkboxes = document.querySelectorAll('.checkbox-prestamo');
+    
+    // Actualizar checkboxes individuales
+    checkboxes.forEach(checkbox => {
+        const prestamoId = parseInt(checkbox.getAttribute('data-prestamo-id'));
+        checkbox.checked = prestamosSeleccionados.has(prestamoId);
+    });
+    
+    // Actualizar checkbox "seleccionar todos"
+    seleccionarTodos.checked = checkboxes.length > 0 && prestamosSeleccionados.size === checkboxes.length;
+    seleccionarTodos.indeterminate = prestamosSeleccionados.size > 0 && prestamosSeleccionados.size < checkboxes.length;
+    
+    // Mostrar/ocultar acciones masivas
+    const accionesMasivas = document.getElementById('acciones-masivas');
+    if (prestamosSeleccionados.size > 0) {
+        accionesMasivas.classList.remove('hidden');
+        document.getElementById('cantidad-seleccionados').textContent = 
+            `${prestamosSeleccionados.size} préstamo${prestamosSeleccionados.size > 1 ? 's' : ''} seleccionado${prestamosSeleccionados.size > 1 ? 's' : ''}`;
+    } else {
+        accionesMasivas.classList.add('hidden');
+    }
+}
+
+function seleccionarTodos() {
+    const seleccionarTodos = document.getElementById('seleccionar-todos');
+    const checkboxes = document.querySelectorAll('.checkbox-prestamo');
+    
+    if (seleccionarTodos.checked) {
+        // Seleccionar todos los préstamos de la página actual
+        checkboxes.forEach(checkbox => {
+            const prestamoId = parseInt(checkbox.getAttribute('data-prestamo-id'));
+            prestamosSeleccionados.add(prestamoId);
+        });
+    } else {
+        // Deseleccionar todos
+        prestamosSeleccionados.clear();
+    }
+    
+    actualizarSeleccionMasiva();
+}
+
+function deseleccionarTodos() {
+    prestamosSeleccionados.clear();
+    actualizarSeleccionMasiva();
+}
+
+function cambiarTab(tab) {
+    // Actualizar clases de los tabs
+    document.getElementById('tab-pendientes').className = tab === 'pendientes' ? 'tab-activo px-6 py-3 font-medium text-lg' : 'tab-inactivo px-6 py-3 font-medium text-lg';
+    document.getElementById('tab-activos').className = tab === 'activos' ? 'tab-activo px-6 py-3 font-medium text-lg' : 'tab-inactivo px-6 py-3 font-medium text-lg';
+    document.getElementById('tab-devuelto').className = tab === 'devuelto' ? 'tab-activo px-6 py-3 font-medium text-lg' : 'tab-inactivo px-6 py-3 font-medium text-lg';
+    
+    // Actualizar el tipo de préstamos a cargar
+    const filtroEstado = document.getElementById('filtro-estado');
+    switch(tab) {
+        case 'pendientes':
+            filtroEstado.value = 'pendiente';
+            break;
+        case 'activos':
+            filtroEstado.value = 'activo';
+            break;
+        case 'devuelto':
+            filtroEstado.value = 'devuelto';
+            break;
+    }
+    
+    // Cargar los préstamos correspondientes
+    cargarPrestamosPendientes();
+}
+
+function actualizarContadores() {
+    const pendientes = prestamos.filter(p => p.estado === 'pendiente').length;
+    const activos = prestamos.filter(p => p.estado === 'activo').length;
+    const devueltos = prestamos.filter(p => p.estado === 'devuelto').length;
+    
+    document.getElementById('contador-pendientes').textContent = pendientes;
+    document.getElementById('contador-activos').textContent = activos;
+    document.getElementById('contador-devuelto').textContent = devueltos;
+}
+
+function actualizarPaginacion() {
+    const totalPaginas = Math.ceil(prestamosFiltrados.length / PRESTAMOS_POR_PAGINA);
+    const numerosPagina = document.getElementById('numeros-pagina');
+    const btnAnterior = document.getElementById('pagina-anterior');
+    const btnSiguiente = document.getElementById('pagina-siguiente');
+    
+    // Actualizar estado de botones
+    btnAnterior.disabled = paginaActual === 1;
+    btnSiguiente.disabled = paginaActual === totalPaginas;
+    
+    // Generar números de página
+    numerosPagina.innerHTML = '';
+    const maxPaginasMostrar = 5;
+    let inicio = 1;
+    let fin = totalPaginas;
+    
+    if (totalPaginas > maxPaginasMostrar) {
+        inicio = Math.max(1, paginaActual - Math.floor(maxPaginasMostrar / 2));
+        fin = Math.min(totalPaginas, inicio + maxPaginasMostrar - 1);
+        
+        if (fin - inicio + 1 < maxPaginasMostrar) {
+            inicio = Math.max(1, fin - maxPaginasMostrar + 1);
+        }
+    }
+    
+    // Puntos suspensivos al inicio si es necesario
+    if (inicio > 1) {
+        numerosPagina.innerHTML += `
+            <button class="px-3 py-1 text-gray-600 hover:text-blue-600" onclick="cambiarPagina(1)">
+                1
+            </button>
+            <span class="px-2 text-gray-400">...</span>
+        `;
+    }
+    
+    // Números de página
+    for (let i = inicio; i <= fin; i++) {
+        numerosPagina.innerHTML += `
+            <button class="px-3 py-1 rounded ${paginaActual === i 
+                ? 'bg-blue-600 text-white' 
+                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'}"
+                onclick="cambiarPagina(${i})">
+                ${i}
+            </button>
+        `;
+    }
+    
+    // Puntos suspensivos al final si es necesario
+    if (fin < totalPaginas) {
+        numerosPagina.innerHTML += `
+            <span class="px-2 text-gray-400">...</span>
+            <button class="px-3 py-1 text-gray-600 hover:text-blue-600" onclick="cambiarPagina(${totalPaginas})">
+                ${totalPaginas}
+            </button>
+        `;
+    }
+}
+
+function cambiarPagina(nuevaPagina) {
+    const totalPaginas = Math.ceil(prestamosFiltrados.length / PRESTAMOS_POR_PAGINA);
+    
+    if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+    
+    paginaActual = nuevaPagina;
+    mostrarPrestamos();
+    actualizarPaginacion();
+}
+
+function manejarFiltroFecha() {
+    const filtroFecha = document.getElementById('filtro-fecha').value;
+    const fechasPersonalizadas = document.getElementById('fechas-personalizadas');
+    
+    if (filtroFecha === 'personalizado') {
+        fechasPersonalizadas.classList.remove('hidden');
+    } else {
+        fechasPersonalizadas.classList.add('hidden');
+    }
+    
+    cargarPrestamosPendientes();
+}
+
+// ===== FUNCIONES DE MODALES =====
+
+function abrirModalAprobacionIndividual(prestamoId) {
+    tipoAccion = 'individual';
+    prestamoSeleccionado = prestamos.find(p => p.id === prestamoId);
+    
+    if (!prestamoSeleccionado) {
+        mostrarNotificacion('error', 'No se encontró el préstamo seleccionado');
+        return;
+    }
+    
+    // Cargar detalles en el modal
+    document.getElementById('detalles-prestamo').innerHTML = `
+        <div class="grid grid-cols-2 gap-2">
+            <div class="font-medium">Estudiante:</div>
+            <div>${prestamoSeleccionado.estudiante_nombre || 'N/A'}</div>
+            
+            <div class="font-medium">Cedula:</div>
+            <div>${prestamoSeleccionado.estudiante_numero || 'N/A'}</div>
+            
+            <div class="font-medium">Libro:</div>
+            <div>${prestamoSeleccionado.libro_titulo || 'N/A'}</div>
+            
+            <div class="font-medium">Autor:</div>
+            <div>${prestamoSeleccionado.libro_autor || 'N/A'}</div>
+            
+            <div class="font-medium">Solicitud:</div>
+            <div>${formatFecha(prestamoSeleccionado.fecha_prestamo)}</div>
+        </div>
+    `;
+    
+    // Establecer fecha mínima de devolución (7 días después de hoy)
+    const fechaDevolucion = document.getElementById('fecha-devolucion');
+    const hoy = new Date();
+    const fechaMinima = new Date(hoy);
+    fechaMinima.setDate(hoy.getDate() + 7);
+    
+    fechaDevolucion.min = fechaMinima.toISOString().split('T')[0];
+    fechaDevolucion.value = '';
+    
+    // Mostrar modal
+    document.getElementById('modal-aprobacion').classList.remove('hidden');
+}
+
+function abrirModalAprobacionMasiva() {
+    tipoAccion = 'masivo';
+    
+    // Cargar detalles en el modal
+    document.getElementById('detalles-prestamo').innerHTML = `
+        <div class="text-center py-4">
+            <i data-lucide="check-square" class="w-12 h-12 text-blue-500 mx-auto mb-2"></i>
+            <p class="font-medium text-gray-700">Aprobar ${prestamosSeleccionados.size} préstamos seleccionados</p>
+            <p class="text-sm text-gray-600 mt-1">Se establecerá la misma fecha de devolución para todos los préstamos.</p>
+        </div>
+    `;
+    
+    // Establecer fecha mínima de devolución
+    const fechaDevolucion = document.getElementById('fecha-devolucion');
+    const hoy = new Date();
+    const fechaMinima = new Date(hoy);
+    fechaMinima.setDate(hoy.getDate() + 7);
+    
+    fechaDevolucion.min = fechaMinima.toISOString().split('T')[0];
+    fechaDevolucion.value = '';
+    
+    // Mostrar modal
+    document.getElementById('modal-aprobacion').classList.remove('hidden');
+}
+
+function cerrarModalAprobacion() {
+    document.getElementById('modal-aprobacion').classList.add('hidden');
+    prestamoSeleccionado = null;
+    tipoAccion = '';
+    document.getElementById('fecha-devolucion').value = '';
+    document.getElementById('observaciones-aprobacion').value = '';
+}
+
+async function confirmarAprobacion() {
+    const fechaDevolucion = document.getElementById('fecha-devolucion').value;
+    const observaciones = document.getElementById('observaciones-aprobacion').value;
+    
+    if (!fechaDevolucion) {
+        mostrarNotificacion('error', 'Por favor selecciona una fecha de devolución');
+        return;
+    }
+    
+    try {
+        let url = '/api/aprobar-prestamo';
+        let body = {};
+        
+        if (tipoAccion === 'individual') {
+            body = {
+                prestamo_id: prestamoSeleccionado.id,
+                fecha_limite: fechaDevolucion,
+                observaciones: observaciones
+            };
+        } else {
+            body = {
+                prestamos_ids: Array.from(prestamosSeleccionados),
+                fecha_limite: fechaDevolucion,
+                observaciones: observaciones
+            };
+        }
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body)
+        });
+        
+        const result = await response.json();
+        
+        if (result.estado === 'ok') {
+            mostrarNotificacion('success', result.mensaje || 'Préstamo(s) aprobado(s) correctamente');
+            cerrarModalAprobacion();
+            
+            // Limpiar selecciones
+            if (tipoAccion === 'masivo') {
+                prestamosSeleccionados.clear();
+            }
+            
+            // Recargar préstamos
+            cargarPrestamosPendientes();
+        } else {
+            throw new Error(result.mensaje || 'Error al aprobar el préstamo');
+        }
+    } catch (error) {
+        console.error('❌ Error aprobando préstamo:', error);
+        mostrarNotificacion('error', error.message);
+    }
+}
+
+function abrirModalRechazoIndividual(prestamoId) {
+    tipoAccion = 'individual';
+    prestamoSeleccionado = prestamos.find(p => p.id === prestamoId);
+    
+    if (!prestamoSeleccionado) {
+        mostrarNotificacion('error', 'No se encontró el préstamo seleccionado');
+        return;
+    }
+    
+    // Cargar detalles en el modal
+    document.getElementById('detalles-rechazo').innerHTML = `
+        <div class="grid grid-cols-2 gap-2">
+            <div class="font-medium">Estudiante:</div>
+            <div>${prestamoSeleccionado.estudiante_nombre || 'N/A'}</div>
+            
+            <div class="font-medium">Cedula:</div>
+            <div>${prestamoSeleccionado.estudiante_numero || 'N/A'}</div>
+            
+            <div class="font-medium">Libro:</div>
+            <div>${prestamoSeleccionado.libro_titulo || 'N/A'}</div>
+            
+            <div class="font-medium">Código:</div>
+            <div>${prestamoSeleccionado.codigo_prestamo || 'P-' + prestamoSeleccionado.id}</div>
+        </div>
+    `;
+    
+    // Resetear formulario
+    document.getElementById('motivo-rechazo').value = '';
+    document.getElementById('observaciones-rechazo').value = '';
+    
+    // Mostrar modal
+    document.getElementById('modal-rechazo').classList.remove('hidden');
+}
+
+function abrirModalRechazoMasivo() {
+    tipoAccion = 'masivo';
+    
+    // Cargar detalles en el modal
+    document.getElementById('detalles-rechazo').innerHTML = `
+        <div class="text-center py-4">
+            <i data-lucide="x-square" class="w-12 h-12 text-red-500 mx-auto mb-2"></i>
+            <p class="font-medium text-gray-700">Rechazar ${prestamosSeleccionados.size} préstamos seleccionados</p>
+            <p class="text-sm text-gray-600 mt-1">Se aplicará el mismo motivo de rechazo a todos los préstamos.</p>
+        </div>
+    `;
+    
+    // Resetear formulario
+    document.getElementById('motivo-rechazo').value = '';
+    document.getElementById('observaciones-rechazo').value = '';
+    
+    // Mostrar modal
+    document.getElementById('modal-rechazo').classList.remove('hidden');
+}
+
+function cerrarModalRechazo() {
+    document.getElementById('modal-rechazo').classList.add('hidden');
+    prestamoSeleccionado = null;
+    tipoAccion = '';
+    document.getElementById('motivo-rechazo').value = '';
+    document.getElementById('observaciones-rechazo').value = '';
+}
+
+async function confirmarRechazo() {
+    const motivo = document.getElementById('motivo-rechazo').value;
+    const observaciones = document.getElementById('observaciones-rechazo').value;
+    
+    if (!motivo) {
+        mostrarNotificacion('error', 'Por favor selecciona un motivo de rechazo');
+        return;
+    }
+    
+    try {
+        let url = '/api/rechazar-prestamo';
+        let body = {};
+        
+        if (tipoAccion === 'individual') {
+            body = {
+                prestamo_id: prestamoSeleccionado.id,
+                motivo: motivo,
+                observaciones: observaciones
+            };
+        } else {
+            body = {
+                prestamos_ids: Array.from(prestamosSeleccionados),
+                motivo: motivo,
+                observaciones: observaciones
+            };
+        }
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body)
+        });
+        
+        const result = await response.json();
+        
+        if (result.estado === 'ok') {
+            mostrarNotificacion('success', result.mensaje || 'Préstamo(s) rechazado(s) correctamente');
+            cerrarModalRechazo();
+            
+            // Limpiar selecciones
+            if (tipoAccion === 'masivo') {
+                prestamosSeleccionados.clear();
+            }
+            
+            // Recargar préstamos
+            cargarPrestamosPendientes();
+        } else {
+            throw new Error(result.mensaje || 'Error al rechazar el préstamo');
+        }
+    } catch (error) {
+        console.error('❌ Error rechazando préstamo:', error);
+        mostrarNotificacion('error', error.message);
+    }
+}
+
+async function mostrarDetallesPrestamo(prestamoId) {
+    try {
+        
+        const response = await fetch(`/api/prestamos/${prestamoId}`);
+        const result = await response.json();
+        
+        if (result.estado === 'ok' && result.prestamo) {
+            const prestamo = result.prestamo[0];
+
+        console.log('📖 Detalles del préstamo:', prestamo.fecha_aprobacion);
+        console.log('📖 Detalles del préstamo con formato :', formatFecha(prestamo.fecha_aprobacion));
+        
+            
+            // Información del estudiante
+            document.getElementById('info-estudiante').innerHTML = `
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="font-medium">Nombre:</div>
+                    <div>${prestamo.estudiante_nombre || 'N/A'}</div>
+                    
+                    <div class="font-medium">Cedula:</div>
+                    <div>${prestamo.estudiante_numero || 'N/A'}</div>
+                    
+                    <div class="font-medium">Correo:</div>
+                    <div>${prestamo.estudiante_email || 'N/A'}</div>
+                    
+                    <div class="font-medium">Carrera:</div>
+                    <div>${prestamo.estudiante_carrera || 'N/A'}</div>
+                    
+                    <div class="font-medium">Teléfono:</div>
+                    <div>${prestamo.estudiante_telefono || 'N/A'}</div>
+                </div>
+            `;
+            
+            // Información del libro
+            document.getElementById('info-libro').innerHTML = `
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="font-medium">Título:</div>
+                    <div>${prestamo.libro_titulo || 'N/A'}</div>
+                    
+                    <div class="font-medium">Autor:</div>
+                    <div>${prestamo.libro_autor || 'N/A'}</div>
+                    
+                    <div class="font-medium">Categoría:</div>
+                    <div>${prestamo.libro_categoria || 'N/A'}</div>
+                    
+                    <div class="font-medium">Cota:</div>
+                    <div>${prestamo.libro_cota || 'N/A'}</div>
+                    
+                    <div class="font-medium">Disponibilidad:</div>
+                    <div>${prestamo.libro_disponible ? 'Disponible' : 'No disponible'}</div>
+                </div>
+            `;
+            
+            // Información del préstamo
+            document.getElementById('info-prestamo').innerHTML = `
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="font-medium">Código:</div>
+                    <div>${'P-' + prestamo.codigo_prestamo || 'P-' + prestamo.id}</div>
+                    
+                    <div class="font-medium">Estado:</div>
+                    <div><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getEstadoClass(prestamo.estado)}">
+                        ${getEstadoTexto(prestamo.estado)}
+                    </span></div>
+                    
+                    <div class="font-medium">Solicitud:</div>
+                    <div>${formatFecha(prestamo.fecha_prestamo)}</div>
+                    
+                    <div class="font-medium">Aprobación:</div>
+                    <div>${prestamo.fecha_aprobacion ? formatFecha(prestamo.fecha_aprobacion) : 'Pendiente'}</div>
+                    
+                    <div class="font-medium">Devolución:</div>
+                    <div>${prestamo.fecha_limite? formatFecha(prestamo.fecha_limite) : 'Pendiente'}</div>
+                    
+                    <div class="font-medium">Devuelto:</div>
+                    <div>${prestamo.fecha_devuelto ? formatFecha(prestamo.fecha_devuelto) : 'Pendiente'}</div>
+                    
+                    ${prestamo.observaciones ? `
+                        <div class="font-medium">Observaciones:</div>
+                        <div class="col-span-2">${prestamo.observaciones}</div>
+                    ` : ''}
+                </div>
+            `;
+            
+            // Historial de estados
+            const historialHTML = prestamo.historial ? prestamo.historial.map(item => `
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 rounded-full ${getEstadoColor(item.estado)} flex items-center justify-center">
+                            <i data-lucide="${getEstadoIcon(item.estado)}" class="w-4 h-4 text-white"></i>
+                        </div>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-900">${getEstadoTexto(item.estado)}</p>
+                        <p class="text-xs text-gray-500">${item.motivo || ''} • ${formatFecha(item.fecha)}</p>
+                        ${item.observaciones ? `<p class="text-xs text-gray-600 mt-1">${item.observaciones}</p>` : ''}
+                    </div>
+                </div>
+            `).join('') : '<p class="text-sm text-gray-500">No hay historial disponible</p>';
+            
+            document.getElementById('historial-estados').innerHTML = historialHTML;
+            
+            // Actualizar íconos
+            if (window.lucide && window.lucide.createIcons) {
+                lucide.createIcons();
+            }
+            
+            // Mostrar modal
+            document.getElementById('modal-detalles').classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('❌ Error cargando detalles:', error);
+        mostrarNotificacion('error', 'Error al cargar los detalles del préstamo');
+    }
+}
+
+function cerrarModalDetalles() {
+    document.getElementById('modal-detalles').classList.add('hidden');
+}
+
+async function marcarComoDevuelto(prestamoId) {
+    if (!confirm('¿Estás seguro de marcar este préstamo como devuelto?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/marcar-devuelto/${prestamoId}`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.estado === 'ok') {
+            mostrarNotificacion('success', 'Préstamo marcado como devuelto correctamente');
+            cargarPrestamosPendientes();
+        } else {
+            throw new Error(result.mensaje || 'Error al marcar como devuelto');
+        }
+    } catch (error) {
+        console.error('❌ Error marcando como devuelto:', error);
+        mostrarNotificacion('error', error.message);
+    }
+}
+
+async function exportarPrestamos() {
+    try {
+        const response = await fetch('/api/exportar-prestamos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                filtros: obtenerParametrosFiltro(),
+                seleccionados: Array.from(prestamosSeleccionados)
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.estado === 'ok' && result.url) {
+            // Descargar el archivo
+            const a = document.createElement('a');
+            a.href = result.url;
+            a.download = 'prestamos.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            mostrarNotificacion('success', 'Exportación completada');
+        } else {
+            throw new Error(result.mensaje || 'Error al exportar');
+        }
+    } catch (error) {
+        console.error('❌ Error exportando préstamos:', error);
+        mostrarNotificacion('error', error.message);
+    }
+}
+
+// ===== FUNCIONES DE UTILIDAD =====
+
+function formatFecha(fechaString) {
+    if (!fechaString) return 'N/A';
+    
+    const fecha = new Date(fechaString);
+
+    // Verificamos si la fecha es válida para evitar errores de "Invalid Date"
+    if (isNaN(fecha.getTime())) return 'Fecha inválida';
+
+    return fecha.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'UTC' // <--- Esto asegura que use la hora exacta del string GMT
+    });
+}
+
+function getEstadoClass(estado) {
+    switch(estado) {
+        case 'pendiente': return 'bg-yellow-100 text-yellow-800';
+        case 'aprobado': return 'bg-blue-100 text-blue-800';
+        case 'activo': return 'bg-green-100 text-green-800';
+        case 'devuelto': return 'bg-gray-100 text-gray-800';
+        case 'rechazado': return 'bg-red-100 text-red-800';
+        case 'atrasado': return 'bg-red-100 text-red-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function getEstadoTexto(estado) {
+    switch(estado) {
+        case 'pendiente': return 'Pendiente';
+        case 'aprobado': return 'Aprobado';
+        case 'activo': return 'Activo';
+        case 'devuelto': return 'Devuelto';
+        case 'rechazado': return 'Rechazado';
+        case 'atrasado': return 'Atrasado';
+        default: return estado;
+    }
+}
+
+function getEstadoColor(estado) {
+    switch(estado) {
+        case 'pendiente': return 'bg-yellow-500';
+        case 'aprobado': return 'bg-blue-500';
+        case 'activo': return 'bg-green-500';
+        case 'devuelto': return 'bg-gray-500';
+        case 'rechazado': return 'bg-red-500';
+        case 'atrasado': return 'bg-red-500';
+        default: return 'bg-gray-500';
+    }
+}
+
+function getEstadoIcon(estado) {
+    switch(estado) {
+        case 'pendiente': return 'clock';
+        case 'aprobado': return 'check';
+        case 'activo': return 'book-check';
+        case 'devuelto': return 'rotate-ccw';
+        case 'rechazado': return 'x';
+        case 'atrasado': return 'alert-triangle';
+        default: return 'circle';
+    }
+}
+
+function mostrarErrorCarga() {
+    document.getElementById('lista-prestamos').innerHTML = `
+        <tr>
+            <td colspan="6" class="px-6 py-12 text-center">
+                <i data-lucide="alert-circle" class="w-16 h-16 mx-auto mb-4 text-red-300"></i>
+                <h3 class="text-xl font-semibold text-red-400 mb-2">Error al cargar los préstamos</h3>
+                <p class="text-gray-500">Intenta nuevamente en unos momentos.</p>
+                <button onclick="cargarPrestamosPendientes()" class="btn-secondary mt-4">
+                    <i data-lucide="refresh-ccw" class="w-4 h-4 mr-2"></i>
+                    Reintentar
+                </button>
+            </td>
+        </tr>
+    `;
+    
+    if (window.lucide && window.lucide.createIcons) {
+        lucide.createIcons();
+    }
+}
+
+function mostrarNotificacion(tipo, mensaje) {
+    // Crear elemento de notificación
+    const notificacion = document.createElement('div');
+    notificacion.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-transform duration-300 translate-x-full ${tipo === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`;
+    
+    const icono = tipo === 'success' ? 
+        '<i data-lucide="check-circle" class="w-5 h-5 text-green-500 mr-2"></i>' : 
+        '<i data-lucide="alert-circle" class="w-5 h-5 text-red-500 mr-2"></i>';
+    
+    notificacion.innerHTML = `
+        <div class="flex items-center">
+            ${icono}
+            <span class="${tipo === 'success' ? 'text-green-800' : 'text-red-800'}">${mensaje}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notificacion);
+    
+    // Actualizar íconos
+    if (window.lucide && window.lucide.createIcons) {
+        lucide.createIcons();
+    }
+    
+    // Mostrar notificación
+    setTimeout(() => {
+        notificacion.classList.remove('translate-x-full');
+        notificacion.classList.add('translate-x-0');
+    }, 10);
+    
+    // Ocultar después de 5 segundos
+    setTimeout(() => {
+        notificacion.classList.remove('translate-x-0');
+        notificacion.classList.add('translate-x-full');
+        
+        // Remover del DOM después de la animación
+        setTimeout(() => {
+            if (notificacion.parentNode) {
+                notificacion.parentNode.removeChild(notificacion);
+            }
+        }, 300);
+    }, 5000);
+}
+
+// Hacer funciones disponibles globalmente
+window.cambiarPagina = cambiarPagina;
+window.mostrarDetallesPrestamo = mostrarDetallesPrestamo;
+</script>
+
+<style>
+.tab-activo {
+    border-bottom: 3px solid #3b82f6;
+    color: #1f2937;
+}
+
+.tab-inactivo {
+    border-bottom: 3px solid transparent;
+    color: #6b7280;
+}
+
+.tab-inactivo:hover {
+    color: #374151;
+    border-bottom-color: #d1d5db;
+}
+
+.checkbox-prestamo:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-overlay.hidden {
+    display: none !important;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3b82f6;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.hidden {
+    display: none !important;
+}
+</style>
+{% endblock %}

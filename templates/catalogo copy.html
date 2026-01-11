@@ -1,0 +1,1248 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- SECCIÓN DE CATÁLOGO DE LIBROS -->
+<section class="content-card bg-blue-50/70 p-10">
+    <h2 class="text-4xl font-bold text-center text-gray-800 mb-8">Catálogo de Libros</h2>
+
+    <!-- Formulario de Búsqueda Mejorado -->
+    <form id="form-busqueda" class="flex justify-center mb-16">
+        <div class="relative w-full max-w-sm">
+            <input type="text" 
+                   id="busqueda-input" 
+                   name="q" 
+                   placeholder="Buscar por título, autor o categoría..." 
+                   value="{{ query }}"
+                   class="form-input rounded-r-none pr-10 focus-visible"
+                   autocomplete="off" />
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                <button type="submit" class="btn-primary rounded-l-none px-6">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+    
+    <div class="grid lg:grid-cols-4 gap-8">
+        
+        <!-- Columna de Filtros Mejorada -->
+        <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg h-fit">
+            <h3 class="text-xl font-semibold mb-6 border-b pb-3">Filtros</h3>
+            <div class="space-y-4">
+                
+                <!-- Filtro Autor -->
+                <div class="filtro-section">
+                    <div class="filtro-header" onclick="toggleFilter('autor-list')">
+                        <span class="font-medium text-gray-700">Autor</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 transition-transform"></i>
+                    </div>
+                    <ul id="autor-list" class="filtro-list mt-2 space-y-1 text-sm text-gray-600 hidden">
+                        {% if libros %}
+                            {% set autores = [] %}
+                            {% for libro in libros %}
+                                {% if libro.autor and libro.autor not in autores %}
+                                    {% set _ = autores.append(libro.autor) %}
+                                    <li class="flex items-center hover:bg-gray-50 rounded p-1">
+                                        <input type="checkbox" name="autor" value="{{ libro.autor }}" 
+                                               class="filtro-checkbox focus-visible">
+                                        <label class="ml-2 cursor-pointer">{{ libro.autor }}</label>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <li class="flex items-center hover:bg-gray-50 rounded p-1">
+                                <input type="checkbox" name="autor" value="Gabriel Garcia Marquez" 
+                                       class="filtro-checkbox focus-visible">
+                                <label class="ml-2 cursor-pointer">Gabriel Garcia Marquez</label>
+                            </li>
+                            <li class="flex items-center hover:bg-gray-50 rounded p-1">
+                                <input type="checkbox" name="autor" value="Isabel Allende" 
+                                       class="filtro-checkbox focus-visible">
+                                <label class="ml-2 cursor-pointer">Isabel Allende</label>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- Filtro Categoría -->
+                <div class="filtro-section">
+                    <div class="filtro-header" onclick="toggleFilter('categoria-list')">
+                        <span class="font-medium text-gray-700">Categoría</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 transition-transform"></i>
+                    </div>
+                    <ul id="categoria-list" class="filtro-list mt-2 space-y-1 text-sm text-gray-600 hidden">
+                        {% if libros %}
+                            {% set categorias = [] %}
+                            {% for libro in libros %}
+                                {% if libro.categoria and libro.categoria not in categorias %}
+                                    {% set _ = categorias.append(libro.categoria) %}
+                                    <li class="flex items-center hover:bg-gray-50 rounded p-1">
+                                        <input type="checkbox" name="categoria" value="{{ libro.categoria }}" 
+                                               class="filtro-checkbox focus-visible">
+                                        <label class="ml-2 cursor-pointer">{{ libro.categoria }}</label>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <li class="flex items-center hover:bg-gray-50 rounded p-1">
+                                <input type="checkbox" name="categoria" value="Literatura" 
+                                       class="filtro-checkbox focus-visible">
+                                <label class="ml-2 cursor-pointer">Literatura</label>
+                            </li>
+                            <li class="flex items-center hover:bg-gray-50 rounded p-1">
+                                <input type="checkbox" name="categoria" value="Ciencia" 
+                                       class="filtro-checkbox focus-visible">
+                                <label class="ml-2 cursor-pointer">Ciencia</label>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                
+                <!-- Filtro Disponibilidad -->
+                <div class="filtro-section">
+                    <div class="filtro-header" onclick="toggleFilter('disponibilidad-list')">
+                        <span class="font-medium text-gray-700">Disponibilidad</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 transition-transform"></i>
+                    </div>
+                    <ul id="disponibilidad-list" class="filtro-list mt-2 space-y-1 text-sm text-gray-600 hidden">
+                        <li class="flex items-center hover:bg-gray-50 rounded p-1">
+                            <input type="checkbox" name="disponibilidad" value="disponible" 
+                                   class="filtro-checkbox focus-visible" checked>
+                            <label class="ml-2 cursor-pointer">Disponible</label>
+                        </li>
+                        <li class="flex items-center hover:bg-gray-50 rounded p-1">
+                            <input type="checkbox" name="disponibilidad" value="prestado" 
+                                   class="filtro-checkbox focus-visible">
+                            <label class="ml-2 cursor-pointer">Prestado</label>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- NUEVO FILTRO: Carrera -->
+                <div class="filtro-section">
+                    <div class="filtro-header" onclick="toggleFilter('carrera-list')">
+                        <span class="font-medium text-gray-700">Carrera</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 transition-transform"></i>
+                    </div>
+                    <ul id="carrera-list" class="filtro-list mt-2 space-y-1 text-sm text-gray-600 hidden">
+                        {% if libros %}
+                            {% set carreras = [] %}
+                            {% for libro in libros %}
+                                {% if libro.carrera and libro.carrera not in carreras %}
+                                    {% set _ = carreras.append(libro.carrera) %}
+                                    <li class="flex items-center hover:bg-gray-50 rounded p-1">
+                                        <input type="checkbox" name="carrera" value="{{ libro.carrera }}" 
+                                               class="filtro-checkbox focus-visible">
+                                        <label class="ml-2 cursor-pointer">{{ libro.carrera }}</label>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <li class="flex items-center hover:bg-gray-50 rounded p-1">
+                                <input type="checkbox" name="carrera" value="Ingeniería Informática" 
+                                       class="filtro-checkbox focus-visible">
+                                <label class="ml-2 cursor-pointer">Ingeniería Informática</label>
+                            </li>
+                            <li class="flex items-center hover:bg-gray-50 rounded p-1">
+                                <input type="checkbox" name="carrera" value="Medicina" 
+                                       class="filtro-checkbox focus-visible">
+                                <label class="ml-2 cursor-pointer">Medicina</label>
+                            </li>
+                            <li class="flex items-center hover:bg-gray-50 rounded p-1">
+                                <input type="checkbox" name="carrera" value="Derecho" 
+                                       class="filtro-checkbox focus-visible">
+                                <label class="ml-2 cursor-pointer">Derecho</label>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                
+                <!-- Botón Limpiar Filtros -->
+                <button id="limpiar-filtros" 
+                        class="btn-secondary w-full focus-visible mt-4">
+                    <i data-lucide="filter-x" class="w-4 h-4 mr-2"></i>
+                    Limpiar Filtros
+                </button>
+
+                <!-- Contador de Resultados -->
+                <div id="contador-resultados" class="text-center text-sm text-gray-500 mt-4 hidden">
+                    <span id="numero-resultados">0</span> libros encontrados
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna de Resultados del Catálogo Mejorada -->
+        <div class="lg:col-span-3">
+            <!-- Barra de Información -->
+            <div class="flex justify-between items-center mb-6">
+                <h4 id="titulo-resultados" class="text-lg font-semibold text-gray-700">
+                    {% if query %}
+                        Resultados para "{{ query }}"
+                    {% else %}
+                        Todos los libros
+                    {% endif %}
+                </h4>
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-600">Ordenar por:</span>
+                    <select id="ordenar-por" class="form-input text-sm py-1 focus-visible">
+                        <option value="titulo">Título A-Z</option>
+                        <option value="titulo-desc">Título Z-A</option>
+                        <option value="autor">Autor A-Z</option>
+                        <option value="fecha">Más Recientes</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Grid de Resultados -->
+            <div id="resultados-libros" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Mostrar libros desde el backend -->
+                {% if libros and libros|length > 0 %}
+                    {% for libro in libros %}
+                    <div class="libro-card focus-visible libro-card-{{ libro.id }}" 
+                         data-libro-id="{{ libro.id }}"
+                         tabindex="0"
+                         role="button"
+                         aria-label="Ver detalles de {{ libro.titulo }} por {{ libro.autor }}">
+                        <div class="h-32 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg mb-3 flex items-center justify-center">
+                            <i data-lucide="book" class="w-8 h-8 text-blue-500"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 text-center mb-2 line-clamp-2">{{ libro.titulo }}</h4>
+                        <p class="text-sm text-gray-600 text-center mb-3">{{ libro.autor }}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="badge {{ 'estado-disponible' if libro.disponible else 'estado-prestado' }}">
+                                {{ 'Disponible' if libro.disponible else 'Prestado' }}
+                            </span>
+                            <span class="text-xs text-gray-500">
+                                {{ libro.categoria if libro.categoria else 'Sin categoría' }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- Estado inicial - Sin resultados -->
+                    <div class="col-span-full text-center py-12 text-gray-500">
+                        <i data-lucide="search" class="w-16 h-16 mx-auto mb-4 text-gray-300"></i>
+                        <h3 class="text-xl font-semibold text-gray-400 mb-2">
+                            {% if query %}
+                                No se encontraron libros para "{{ query }}"
+                            {% else %}
+                                No hay libros en el catálogo
+                            {% endif %}
+                        </h3>
+                        <p class="text-gray-400">
+                            {% if query %}
+                                Intenta con otros términos de búsqueda
+                            {% else %}
+                                Contacta al administrador del sistema
+                            {% endif %}
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Paginación INICIAL - VISIBLE SI HAY LIBROS -->
+            <div id="paginacion-inicial" class="flex justify-center items-center space-x-2 mt-8 {% if not libros or libros|length <= 9 %}hidden{% endif %}">
+                <button id="pagina-anterior-inicial" 
+                        class="btn-secondary px-3 py-1 focus-visible disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+                
+                <!-- Números de página -->
+                <div id="numeros-pagina-inicial" class="flex items-center space-x-1">
+                    <!-- Se generarán dinámicamente -->
+                </div>
+                
+                <button id="pagina-siguiente-inicial" 
+                        class="btn-secondary px-3 py-1 focus-visible disabled:opacity-50 disabled:cursor-not-allowed"
+                        {% if libros and libros|length <= 9 %}disabled{% endif %}>
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Paginación DINÁMICA (para búsquedas) -->
+            <div id="paginacion-dinamica" class="flex justify-center items-center space-x-2 mt-8 hidden">
+                <button id="pagina-anterior-dinamica" 
+                        class="btn-secondary px-3 py-1 focus-visible disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+                
+                <!-- Números de página -->
+                <div id="numeros-pagina-dinamica" class="flex items-center space-x-1">
+                    <!-- Se generarán dinámicamente -->
+                </div>
+                
+                <button id="pagina-siguiente-dinamica" 
+                        class="btn-secondary px-3 py-1 focus-visible disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal de Detalles del Libro - VERSIÓN SIMPLIFICADA -->
+<div id="modal-detalles" class="modal-overlay hidden">
+    <div class="modal-content max-w-2xl">
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-xl font-bold text-gray-800">Detalles del Libro</h3>
+            <button id="btn-cerrar-modal" 
+                    class="text-gray-400 hover:text-gray-600 focus-visible p-1 rounded">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="md:col-span-1">
+                <div class="bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg h-48 flex items-center justify-center">
+                    <i data-lucide="book-open" class="w-12 h-12 text-blue-600"></i>
+                </div>
+                <div class="mt-4 text-center">
+                    <span id="modal-estado" class="badge estado-disponible text-sm">Disponible</span>
+                </div>
+            </div>
+            
+            <div class="md:col-span-2">
+                <div id="modal-contenido-dinamico" class="space-y-3">
+                    <!-- El contenido se cargará aquí dinámicamente -->
+                    <div class="text-center py-4">
+                        <div class="spinner mx-auto mb-2"></div>
+                        <p class="text-gray-600">Cargando detalles...</p>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex space-x-3">
+                    <button id="btn-prestar-modal" 
+                            class="btn-primary flex-1 focus-visible disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+                        <i data-lucide="book-open" class="w-4 h-4 mr-2"></i>
+                        Solicitar Préstamo
+                    </button>
+                    <button id="btn-cerrar-detalles" 
+                            class="btn-secondary focus-visible">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variables globales para paginación
+let paginaActual = 1;
+let totalPaginas = 1;
+const LIBROS_POR_PAGINA = 9;
+let todosLosLibros = [];
+
+// Función para alternar filtros (añadir al script existente)
+function toggleFilter(filterId) {
+    const filterList = document.getElementById(filterId);
+    const icon = filterList.previousElementSibling.querySelector('i');
+    
+    if (filterList.classList.contains('hidden')) {
+        filterList.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        filterList.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Inicializando catálogo...');
+    
+    // Inicializar los libros del backend
+    inicializarLibrosBackend();
+    
+    // Inicializar componentes del catálogo
+    initCatalogo();
+    
+    // Configurar event listeners para las tarjetas de libros
+    setupLibroCardsEventListeners();
+    
+    // Configurar event listeners del modal
+    setupModalEventListeners();
+    
+    // Configurar búsqueda inicial si hay query
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = urlParams.get('q');
+    if (query) {
+        document.getElementById('busqueda-input').value = query;
+        // Realizar búsqueda automática si hay query en la URL
+        setTimeout(() => {
+            paginaActual = 1;
+            realizarBusqueda();
+        }, 500);
+    }
+});
+
+// Función para inicializar los libros desde el backend
+function inicializarLibrosBackend() {
+    console.log('📚 Inicializando libros del backend...');
+    
+    // Obtener todos los libros renderizados por el backend
+    const libroCards = document.querySelectorAll('[class*="libro-card-"]');
+    const resultadosLibros = document.getElementById('resultados-libros');
+    
+    if (libroCards.length === 0) {
+        console.log('No hay libros iniciales');
+        return;
+    }
+    
+    // Guardar todos los libros en la variable global
+    todosLosLibros = Array.from(libroCards).map(card => {
+        const libroId = card.getAttribute('data-libro-id');
+        const titulo = card.querySelector('h4')?.textContent || '';
+        const autor = card.querySelector('p.text-sm.text-gray-600')?.textContent || '';
+        
+        // Detectar correctamente la disponibilidad
+        const estadoBadge = card.querySelector('.badge');
+        let disponible = true; // Por defecto disponible
+        
+        if (estadoBadge) {
+            const estadoTexto = estadoBadge.textContent.trim();
+            const estadoClases = estadoBadge.className;
+            
+            // Verificar por texto y clases CSS
+            disponible = estadoTexto === 'Disponible' || 
+                        estadoClases.includes('estado-disponible');
+        }
+        
+        const categoria = card.querySelector('span.text-xs.text-gray-500')?.textContent || 'General';
+        
+        // Obtener datos desde atributos de datos si están disponibles
+        const carrera = card.getAttribute('data-carrera') || 'Ingeniería Informática';
+        
+        return {
+            id: parseInt(libroId),
+            titulo: titulo.trim(),
+            autor: autor.trim(),
+            disponible: disponible,
+            categoria: categoria.replace('Sin categoría', 'General').trim(),
+            carrera: carrera,
+            estado: disponible ? 'disponible' : 'prestado'
+        };
+    });
+    
+    console.log(`📚 Se cargaron ${todosLosLibros.length} libros iniciales`);
+    
+    // Configurar paginación inicial
+    if (todosLosLibros.length > 0) {
+        totalPaginas = Math.ceil(todosLosLibros.length / LIBROS_POR_PAGINA);
+        
+        // Si hay más de 9 libros, mostrar paginación y dividir en páginas
+        if (todosLosLibros.length > LIBROS_POR_PAGINA) {
+            console.log(`📖 Mostrando paginación inicial: ${totalPaginas} páginas`);
+            
+            // Ocultar todos los libros iniciales
+            libroCards.forEach(card => {
+                card.style.display = 'none';
+            });
+            
+            // Mostrar solo los libros de la primera página
+            const inicio = 0;
+            const fin = LIBROS_POR_PAGINA;
+            const librosPrimeraPagina = todosLosLibros.slice(inicio, fin);
+            
+            // Limpiar contenedor y mostrar solo los libros de la primera página
+            resultadosLibros.innerHTML = '';
+            mostrarLibrosEnContenedor(librosPrimeraPagina, resultadosLibros);
+            
+            // Configurar paginación inicial
+            actualizarControlesPaginacionInicial();
+            
+            // Mostrar contador de resultados
+            actualizarContadorResultados(todosLosLibros.length);
+        } else {
+            // Menos de 9 libros, mantener todos visibles y ocultar paginación
+            const paginacionInicial = document.getElementById('paginacion-inicial');
+            if (paginacionInicial) {
+                paginacionInicial.classList.add('hidden');
+            }
+            
+            // Actualizar contador de resultados
+            actualizarContadorResultados(todosLosLibros.length);
+        }
+    }
+}
+
+// Función para mostrar libros en el contenedor
+function mostrarLibrosEnContenedor(libros, contenedor) {
+    if (libros.length === 0) {
+        contenedor.innerHTML = `
+            <div class="col-span-full text-center py-12 text-gray-500">
+                <i data-lucide="book-x" class="w-16 h-16 mx-auto mb-4 text-gray-300"></i>
+                <h3 class="text-xl font-semibold text-gray-400 mb-2">No hay libros en esta página</h3>
+            </div>
+        `;
+        return;
+    }
+
+    contenedor.innerHTML = libros.map(libro => `
+        <div class="libro-card focus-visible hover-lift libro-card-${libro.id}" 
+             data-libro-id="${libro.id}"
+             data-carrera="${libro.carrera || 'General'}"
+             tabindex="0"
+             role="button"
+             aria-label="Ver detalles de ${libro.titulo} por ${libro.autor}">
+            <div class="h-32 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg mb-3 flex items-center justify-center relative">
+                <i data-lucide="book" class="w-8 h-8 text-blue-500"></i>
+                ${!libro.disponible ? `
+                    <div class="absolute top-2 right-2">
+                        <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full">Prestado</span>
+                    </div>
+                ` : ''}
+            </div>
+            <h4 class="font-semibold text-gray-800 text-center mb-2 line-clamp-2">${libro.titulo}</h4>
+            <p class="text-sm text-gray-600 text-center mb-3 line-clamp-1">${libro.autor}</p>
+            <div class="flex justify-between items-center">
+                <span class="badge ${libro.disponible ? 'estado-disponible' : 'estado-prestado'}">
+                    ${libro.disponible ? 'Disponible' : 'Prestado'}
+                </span>
+                <span class="text-xs text-gray-500">${libro.categoria || 'General'}</span>
+            </div>
+        </div>
+    `).join('');
+
+    // Actualizar íconos
+    if (window.lucide && window.lucide.createIcons) {
+        lucide.createIcons();
+    }
+}
+
+// Función para actualizar controles de paginación inicial
+function actualizarControlesPaginacionInicial() {
+    const paginacion = document.getElementById('paginacion-inicial');
+    const btnAnterior = document.getElementById('pagina-anterior-inicial');
+    const btnSiguiente = document.getElementById('pagina-siguiente-inicial');
+    const numerosPagina = document.getElementById('numeros-pagina-inicial');
+    
+    if (!paginacion || totalPaginas <= 1) {
+        paginacion.classList.add('hidden');
+        return;
+    }
+    
+    // Mostrar paginación
+    paginacion.classList.remove('hidden');
+    
+    // Actualizar estado de botones
+    btnAnterior.disabled = paginaActual === 1;
+    btnSiguiente.disabled = paginaActual === totalPaginas;
+    
+    // Configurar eventos de botones
+    btnAnterior.onclick = () => cambiarPaginaInicial(paginaActual - 1);
+    btnSiguiente.onclick = () => cambiarPaginaInicial(paginaActual + 1);
+    
+    // Generar números de página
+    generarNumerosPagina(numerosPagina, 'inicial');
+}
+
+// Función para cambiar página inicial
+function cambiarPaginaInicial(nuevaPagina) {
+    if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+    
+    paginaActual = nuevaPagina;
+    
+    // Obtener libros para la nueva página
+    const inicio = (paginaActual - 1) * LIBROS_POR_PAGINA;
+    const fin = inicio + LIBROS_POR_PAGINA;
+    const librosPagina = todosLosLibros.slice(inicio, fin);
+    
+    // Mostrar resultados de la nueva página
+    const contenedor = document.getElementById('resultados-libros');
+    mostrarLibrosEnContenedor(librosPagina, contenedor);
+    
+    // Actualizar controles de paginación
+    actualizarControlesPaginacionInicial();
+    
+    // Re-configurar event listeners para las nuevas tarjetas
+    setTimeout(setupLibroCardsEventListeners, 100);
+    
+    // Scroll suave hacia arriba
+    window.scrollTo({
+        top: contenedor.offsetTop - 100,
+        behavior: 'smooth'
+    });
+}
+
+// Función para generar números de página
+function generarNumerosPagina(contenedor, tipo) {
+    const maxPaginasMostrar = 5;
+    let inicio = 1;
+    let fin = totalPaginas;
+    
+    if (totalPaginas > maxPaginasMostrar) {
+        inicio = Math.max(1, paginaActual - Math.floor(maxPaginasMostrar / 2));
+        fin = Math.min(totalPaginas, inicio + maxPaginasMostrar - 1);
+        
+        if (fin - inicio + 1 < maxPaginasMostrar) {
+            inicio = Math.max(1, fin - maxPaginasMostrar + 1);
+        }
+    }
+    
+    let numerosHTML = '';
+    
+    // Puntos suspensivos al inicio si es necesario
+    if (inicio > 1) {
+        numerosHTML += `
+            <button class="px-3 py-1 text-gray-600 hover:text-blue-600 focus-visible" onclick="cambiarPagina${tipo === 'inicial' ? 'Inicial' : 'Dinamica'}(1)">
+                1
+            </button>
+            <span class="px-2 text-gray-400">...</span>
+        `;
+    }
+    
+    // Números de página
+    for (let i = inicio; i <= fin; i++) {
+        numerosHTML += `
+            <button class="px-3 py-1 rounded focus-visible ${paginaActual === i 
+                ? 'bg-blue-600 text-white' 
+                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'}"
+                onclick="cambiarPagina${tipo === 'inicial' ? 'Inicial' : 'Dinamica'}(${i})">
+                ${i}
+            </button>
+        `;
+    }
+    
+    // Puntos suspensivos al final si es necesario
+    if (fin < totalPaginas) {
+        numerosHTML += `
+            <span class="px-2 text-gray-400">...</span>
+            <button class="px-3 py-1 text-gray-600 hover:text-blue-600 focus-visible" onclick="cambiarPagina${tipo === 'inicial' ? 'Inicial' : 'Dinamica'}(${totalPaginas})">
+                ${totalPaginas}
+            </button>
+        `;
+    }
+    
+    contenedor.innerHTML = numerosHTML;
+}
+
+function initCatalogo() {
+    console.log('🔧 Configurando búsqueda y filtros...');
+    
+    // Configurar búsqueda
+    const formBusqueda = document.getElementById('form-busqueda');
+    const busquedaInput = document.getElementById('busqueda-input');
+    
+    if (formBusqueda) {
+        formBusqueda.addEventListener('submit', function(e) {
+            e.preventDefault();
+            paginaActual = 1; // Resetear a primera página
+            realizarBusqueda();
+        });
+    }
+
+    // Búsqueda en tiempo real
+    if (busquedaInput) {
+        let timeout;
+        busquedaInput.addEventListener('input', function(e) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                if (e.target.value.length >= 2 || e.target.value.length === 0) {
+                    paginaActual = 1; // Resetear a primera página
+                    realizarBusqueda();
+                }
+            }, 500);
+        });
+    }
+
+    // Configurar filtros (incluyendo el nuevo filtro de carrera)
+    document.querySelectorAll('.filtro-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            paginaActual = 1; // Resetear a primera página
+            realizarBusqueda();
+        });
+    });
+
+    // Configurar ordenamiento
+    const ordenarSelect = document.getElementById('ordenar-por');
+    if (ordenarSelect) {
+        ordenarSelect.addEventListener('change', function() {
+            paginaActual = 1; // Resetear a primera página
+            realizarBusqueda();
+        });
+    }
+
+    // Configurar limpiar filtros
+    const btnLimpiar = document.getElementById('limpiar-filtros');
+    if (btnLimpiar) {
+        btnLimpiar.addEventListener('click', function() {
+            // Limpiar todos los checkboxes
+            document.querySelectorAll('.filtro-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            // Marcar solo disponible como checked
+            const disponibleCheckbox = document.querySelector('input[name="disponibilidad"][value="disponible"]');
+            if (disponibleCheckbox) {
+                disponibleCheckbox.checked = true;
+            }
+            
+            // Limpiar búsqueda
+            if (busquedaInput) {
+                busquedaInput.value = '';
+            }
+            
+            paginaActual = 1; // Resetear a primera página
+            realizarBusqueda();
+        });
+    }
+}
+
+function setupLibroCardsEventListeners() {
+    console.log('🔧 Configurando event listeners para tarjetas...');
+    
+    // Configurar event listeners para todas las tarjetas de libros
+    document.addEventListener('click', function(e) {
+        const libroCard = e.target.closest('[class*="libro-card-"]');
+        if (libroCard) {
+            const libroId = libroCard.getAttribute('data-libro-id');
+            if (libroId) {
+                console.log('📖 Click en libro ID:', libroId);
+                mostrarDetallesLibro(parseInt(libroId));
+            }
+        }
+    });
+
+    // Configurar event listeners para teclado (Enter key)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const libroCard = e.target.closest('[class*="libro-card-"]');
+            if (libroCard) {
+                const libroId = libroCard.getAttribute('data-libro-id');
+                if (libroId) {
+                    console.log('📖 Enter en libro ID:', libroId);
+                    mostrarDetallesLibro(parseInt(libroId));
+                }
+            }
+        }
+    });
+}
+
+function setupModalEventListeners() {
+    console.log('🔧 Configurando event listeners del modal...');
+    
+    // Configurar botón cerrar modal
+    const btnCerrarModal = document.getElementById('btn-cerrar-modal');
+    const btnCerrarDetalles = document.getElementById('btn-cerrar-detalles');
+    
+    if (btnCerrarModal) {
+        btnCerrarModal.addEventListener('click', cerrarModalDetalles);
+    }
+    
+    if (btnCerrarDetalles) {
+        btnCerrarDetalles.addEventListener('click', cerrarModalDetalles);
+    }
+
+    // Cerrar modal al hacer click fuera del contenido
+    document.addEventListener('click', function(e) {
+        const modal = document.getElementById('modal-detalles');
+        if (modal && !modal.classList.contains('hidden') && e.target === modal) {
+            cerrarModalDetalles();
+        }
+    });
+
+    // Cerrar modal con tecla Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            cerrarModalDetalles();
+        }
+    });
+}
+
+// Función para realizar la búsqueda
+async function realizarBusqueda() {
+    console.log('🔍 Iniciando búsqueda...');
+    
+    const contenedor = document.getElementById('resultados-libros');
+    const contador = document.getElementById('contador-resultados');
+    const busquedaInput = document.getElementById('busqueda-input');
+    const query = busquedaInput ? busquedaInput.value : '';
+
+    if (!contenedor) return;
+
+    // Mostrar estado de carga
+    mostrarEstadoCarga(contenedor);
+
+    try {
+        const parametros = obtenerParametrosBusqueda();
+        console.log('📡 Parámetros de búsqueda:', parametros);
+        
+        const resultados = await buscarLibrosAPI(parametros);
+        console.log('✅ Resultados recibidos:', resultados.length, 'libros');
+        
+        // Guardar todos los libros para paginación
+        todosLosLibros = resultados;
+        
+        // Calcular paginación
+        totalPaginas = Math.ceil(resultados.length / LIBROS_POR_PAGINA);
+        
+        // Asegurarnos de que páginaActual sea válida
+        if (paginaActual > totalPaginas) {
+            paginaActual = 1;
+        }
+        
+        // Obtener libros para la página actual
+        const inicio = (paginaActual - 1) * LIBROS_POR_PAGINA;
+        const fin = inicio + LIBROS_POR_PAGINA;
+        const librosPagina = resultados.slice(inicio, fin);
+        
+        console.log(`📖 Página ${paginaActual}/${totalPaginas}: ${librosPagina.length} libros`);
+        
+        // Mostrar resultados de la página actual
+        if (librosPagina.length === 0 && resultados.length > 0) {
+            // Esto puede pasar si paginaActual es inválida
+            paginaActual = 1;
+            const nuevoInicio = (paginaActual - 1) * LIBROS_POR_PAGINA;
+            const nuevoFin = nuevoInicio + LIBROS_POR_PAGINA;
+            const nuevosLibrosPagina = resultados.slice(nuevoInicio, nuevoFin);
+            mostrarLibrosEnContenedor(nuevosLibrosPagina, contenedor);
+        } else {
+            mostrarLibrosEnContenedor(librosPagina, contenedor);
+        }
+        
+        // Actualizar contador
+        actualizarContadorResultados(resultados.length);
+        
+        // Actualizar título de resultados
+        const tituloResultados = document.getElementById('titulo-resultados');
+        if (tituloResultados) {
+            if (query) {
+                tituloResultados.textContent = `Resultados para "${query}"`;
+            } else {
+                const filtrosActivos = document.querySelectorAll('.filtro-checkbox:checked').length > 0;
+                tituloResultados.textContent = filtrosActivos ? 'Libros filtrados' : 'Todos los libros';
+            }
+        }
+        
+        // Manejar paginación
+        manejarPaginacionDespuesDeBusqueda();
+        
+        // Re-configurar event listeners para las nuevas tarjetas
+        setTimeout(setupLibroCardsEventListeners, 100);
+
+    } catch (error) {
+        console.error('❌ Error en la búsqueda:', error);
+        mostrarErrorBusqueda(contenedor);
+        
+        // Ocultar ambas paginaciones
+        document.getElementById('paginacion-inicial')?.classList.add('hidden');
+        document.getElementById('paginacion-dinamica')?.classList.add('hidden');
+    }
+}
+
+// Función para obtener parámetros de búsqueda (MODIFICADA para incluir carrera)
+function obtenerParametrosBusqueda() {
+    const busquedaInput = document.getElementById('busqueda-input');
+    const ordenarSelect = document.getElementById('ordenar-por');
+    
+    return {
+        query: busquedaInput ? busquedaInput.value : '',
+        autores: Array.from(document.querySelectorAll('input[name="autor"]:checked')).map(cb => cb.value),
+        categorias: Array.from(document.querySelectorAll('input[name="categoria"]:checked')).map(cb => cb.value),
+        disponibilidad: Array.from(document.querySelectorAll('input[name="disponibilidad"]:checked')).map(cb => cb.value),
+        carreras: Array.from(document.querySelectorAll('input[name="carrera"]:checked')).map(cb => cb.value), // NUEVO
+        orden: ordenarSelect ? ordenarSelect.value : 'titulo'
+    };
+}
+
+// Nueva función para manejar la paginación después de búsqueda
+function manejarPaginacionDespuesDeBusqueda() {
+    const paginacionInicial = document.getElementById('paginacion-inicial');
+    const paginacionDinamica = document.getElementById('paginacion-dinamica');
+    
+    // Ocultar siempre la paginación inicial después de una búsqueda
+    if (paginacionInicial) {
+        paginacionInicial.classList.add('hidden');
+    }
+    
+    // Mostrar/ocultar paginación dinámica según resultados
+    if (paginacionDinamica) {
+        if (todosLosLibros.length > LIBROS_POR_PAGINA) {
+            console.log('📄 Mostrando paginación dinámica');
+            paginacionDinamica.classList.remove('hidden');
+            actualizarControlesPaginacionDinamica();
+        } else {
+            console.log('📄 Ocultando paginación dinámica (menos de 10 libros)');
+            paginacionDinamica.classList.add('hidden');
+        }
+    }
+}
+
+async function buscarLibrosAPI(parametros) {
+    console.log('📡 Enviando solicitud a API con parámetros:', parametros);
+    
+    try {
+        const response = await fetch('/api/filtrar-libros', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(parametros)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('✅ Respuesta de API recibida:', {
+            estado: result.estado,
+            cantidad_libros: result.libros ? result.libros.length : 0
+        });
+        
+        if (result.estado === 'ok') {
+            return result.libros;
+        } else {
+            throw new Error(result.mensaje || 'Error desconocido en la API');
+        }
+    } catch (error) {
+        console.error('❌ Error en búsqueda API:', error);
+        throw error;
+    }
+}
+
+function mostrarEstadoCarga(contenedor) {
+    contenedor.innerHTML = `
+        <div class="col-span-full text-center py-12">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-gray-600">Buscando libros...</p>
+        </div>
+    `;
+}
+
+function mostrarErrorBusqueda(contenedor) {
+    contenedor.innerHTML = `
+        <div class="col-span-full text-center py-12 text-gray-500">
+            <i data-lucide="alert-circle" class="w-16 h-16 mx-auto mb-4 text-red-300"></i>
+            <h3 class="text-xl font-semibold text-red-400 mb-2">Error en la búsqueda</h3>
+            <p class="text-gray-400">Ocurrió un error al buscar libros. Intenta nuevamente.</p>
+        </div>
+    `;
+    if (window.lucide && window.lucide.createIcons) {
+        lucide.createIcons();
+    }
+}
+
+function actualizarContadorResultados(cantidad = null) {
+    const contador = document.getElementById('contador-resultados');
+    const numeroResultados = document.getElementById('numero-resultados');
+    
+    if (!contador || !numeroResultados) return;
+
+    if (cantidad !== null) {
+        numeroResultados.textContent = cantidad;
+        if (cantidad > 0) {
+            contador.classList.remove('hidden');
+        } else {
+            contador.classList.add('hidden');
+        }
+    }
+}
+
+// Función para actualizar controles de paginación dinámica
+function actualizarControlesPaginacionDinamica() {
+    const paginacion = document.getElementById('paginacion-dinamica');
+    const btnAnterior = document.getElementById('pagina-anterior-dinamica');
+    const btnSiguiente = document.getElementById('pagina-siguiente-dinamica');
+    const numerosPagina = document.getElementById('numeros-pagina-dinamica');
+    
+    if (!paginacion) return;
+    
+    if (totalPaginas <= 1) {
+        paginacion.classList.add('hidden');
+        return;
+    }
+    
+    // Mostrar paginación
+    paginacion.classList.remove('hidden');
+    
+    // Actualizar estado de botones
+    btnAnterior.disabled = paginaActual === 1;
+    btnSiguiente.disabled = paginaActual === totalPaginas;
+    
+    // Configurar eventos de botones
+    btnAnterior.onclick = () => cambiarPaginaDinamica(paginaActual - 1);
+    btnSiguiente.onclick = () => cambiarPaginaDinamica(paginaActual + 1);
+    
+    // Generar números de página
+    generarNumerosPagina(numerosPagina, 'dinamica');
+}
+
+// Función para cambiar página dinámica
+function cambiarPaginaDinamica(nuevaPagina) {
+    if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+    
+    paginaActual = nuevaPagina;
+    
+    // Verificar que tenemos libros para paginar
+    if (!todosLosLibros || todosLosLibros.length === 0) {
+        console.error('No hay libros para paginar');
+        return;
+    }
+    
+    // Obtener libros para la nueva página
+    const inicio = (paginaActual - 1) * LIBROS_POR_PAGINA;
+    const fin = inicio + LIBROS_POR_PAGINA;
+    const librosPagina = todosLosLibros.slice(inicio, fin);
+    
+    console.log(`📖 Cambiando a página ${paginaActual}: ${librosPagina.length} libros`);
+    
+    // Mostrar resultados de la nueva página
+    const contenedor = document.getElementById('resultados-libros');
+    
+    if (librosPagina.length === 0) {
+        // Si no hay libros en esta página, mostrar mensaje
+        contenedor.innerHTML = `
+            <div class="col-span-full text-center py-12 text-gray-500">
+                <i data-lucide="book-x" class="w-16 h-16 mx-auto mb-4 text-gray-300"></i>
+                <h3 class="text-xl font-semibold text-gray-400 mb-2">No hay libros en esta página</h3>
+                <p class="text-gray-400">Intenta seleccionar otra página</p>
+            </div>
+        `;
+    } else {
+        mostrarLibrosEnContenedor(librosPagina, contenedor);
+    }
+    
+    // Actualizar controles de paginación
+    actualizarControlesPaginacionDinamica();
+    
+    // Re-configurar event listeners para las nuevas tarjetas
+    setTimeout(setupLibroCardsEventListeners, 100);
+    
+    // Scroll suave hacia arriba
+    window.scrollTo({
+        top: contenedor.offsetTop - 100,
+        behavior: 'smooth'
+    });
+}
+
+// ===== FUNCIONES GLOBALES ESPECÍFICAS PARA CATÁLOGO =====
+
+// Función para mostrar detalles del libro - VERSIÓN CORREGIDA
+function mostrarDetallesLibro(libroId) {
+    console.log('📚 Mostrando detalles del libro ID:', libroId);
+    
+    // Mostrar el modal inmediatamente
+    const modal = document.getElementById('modal-detalles');
+    modal.classList.remove('hidden');
+    
+    // Mostrar loading
+    const contenido = document.getElementById('modal-contenido-dinamico');
+    contenido.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner mx-auto mb-2"></div>
+            <p class="text-gray-600">Cargando detalles del libro...</p>
+        </div>
+    `;
+    
+    // Hacer la petición a la API
+    fetch(`/api/libros/${libroId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(result => {
+            console.log('✅ Datos recibidos:', result);
+            
+            if (result.estado === 'ok' && result.libro) {
+                actualizarModalConDatos(result.libro);
+            } else {
+                throw new Error(result.mensaje || 'Libro no encontrado');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error cargando detalles:', error);
+            mostrarErrorEnModal(error.message);
+        });
+}
+
+function actualizarModalConDatos(libro) {
+    console.log('🎨 Actualizando modal con datos:', libro);
+    
+    const contenido = document.getElementById('modal-contenido-dinamico');
+    
+    // Crear HTML con todos los datos
+    contenido.innerHTML = `
+        <div class="space-y-3">
+            <div>
+                <label class="text-sm font-medium text-gray-600 block mb-1">Título:</label>
+                <p class="font-semibold text-gray-800 text-lg">${libro.titulo || 'No disponible'}</p>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-600 block mb-1">Autor:</label>
+                <p class="text-gray-700">${libro.autor || 'No disponible'}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600 block mb-1">Categoría:</label>
+                    <p class="text-gray-700">${libro.categoria || 'No especificada'}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600 block mb-1">COTA:</label>
+                    <p class="text-gray-700">${libro.cota || 'No disponible'}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600 block mb-1">Editorial:</label>
+                    <p class="text-gray-700">${libro.editorial || 'No especificada'}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600 block mb-1">Tomo:</label>
+                    <p class="text-gray-700">${libro.tomo || 'No especificado'}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600 block mb-1">UBI:</label>
+                    <p class="text-gray-700">${libro.Ubicacion || 'No especificado'}</p>
+                </div>      
+                <div>
+                    <label class="text-sm font-medium text-gray-600 block mb-1">Carrera:</label>
+                    <p class="text-gray-700">${libro.carrera || 'No especificado'}</p>
+                </div>               
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-600 block mb-1">Ejemplares:</label>
+                <p class="text-gray-700">Total: ${libro.cantidad_total || 0} | Disponibles: ${libro.cantidad_disponible || 0}</p>
+            </div>
+            ${libro.descripcion ? `
+            <div>
+                <label class="text-sm font-medium text-gray-600 block mb-1">Descripción:</label>
+                <p class="text-gray-700 text-sm leading-relaxed">${libro.descripcion}</p>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    
+    // Actualizar estado
+    const estadoElement = document.getElementById('modal-estado');
+    const disponible = libro.disponible || (libro.cantidad_disponible > 0);
+    estadoElement.textContent = disponible ? 'Disponible' : 'Prestado';
+    estadoElement.className = `badge ${disponible ? 'estado-disponible' : 'estado-prestado'} text-sm`;
+    
+    // Configurar botón de préstamo
+    const btnPrestar = document.getElementById('btn-prestar-modal');
+    if (disponible) {
+        btnPrestar.disabled = false;
+        btnPrestar.classList.remove('disabled', 'opacity-50', 'cursor-not-allowed');
+        btnPrestar.innerHTML = '<i data-lucide="book-open" class="w-4 h-4 mr-2"></i>Solicitar Préstamo';
+        btnPrestar.onclick = () => {
+            const params = new URLSearchParams({
+                libro: libro.id,
+                titulo: libro.titulo || '',
+                autor: libro.autor || ''
+            });
+            window.location.href = `/prestamo?${params.toString()}`;
+        };
+    } else {
+        btnPrestar.disabled = true;
+        btnPrestar.classList.add('disabled', 'opacity-50', 'cursor-not-allowed');
+        btnPrestar.innerHTML = '<i data-lucide="clock" class="w-4 h-4 mr-2"></i>No Disponible';
+        btnPrestar.onclick = null;
+    }
+    
+    // Actualizar íconos
+    if (window.lucide && window.lucide.createIcons) {
+        lucide.createIcons();
+    }
+}
+
+function mostrarErrorEnModal(mensaje) {
+    const contenido = document.getElementById('modal-contenido-dinamico');
+    contenido.innerHTML = `
+        <div class="text-center py-4 text-red-600">
+            <i data-lucide="alert-circle" class="w-12 h-12 mx-auto mb-2"></i>
+            <p class="font-medium">Error al cargar los detalles</p>
+            <p class="text-sm text-gray-600 mt-1">${mensaje}</p>
+        </div>
+    `;
+    if (window.lucide && window.lucide.createIcons) {
+        lucide.createIcons();
+    }
+}
+
+// Función para cerrar modal de detalles
+function cerrarModalDetalles() {
+    console.log('❌ Cerrando modal...');
+    document.getElementById('modal-detalles').classList.add('hidden');
+}
+
+// Función mejorada para limpiar filtros
+window.limpiarFiltros = function() {
+    console.log('🧹 Limpiando filtros...');
+    
+    // Limpiar todos los checkboxes
+    document.querySelectorAll('.filtro-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Marcar solo disponible como checked
+    const disponibleCheckbox = document.querySelector('input[name="disponibilidad"][value="disponible"]');
+    if (disponibleCheckbox) {
+        disponibleCheckbox.checked = true;
+    }
+    
+    // Limpiar búsqueda
+    const busquedaInput = document.getElementById('busqueda-input');
+    if (busquedaInput) {
+        busquedaInput.value = '';
+    }
+    
+    // Restaurar a la vista inicial
+    paginaActual = 1;
+    
+    // Obtener libros para la primera página
+    const inicio = (paginaActual - 1) * LIBROS_POR_PAGINA;
+    const fin = inicio + LIBROS_POR_PAGINA;
+    const librosPagina = todosLosLibros.slice(inicio, fin);
+    
+    // Mostrar libros
+    const contenedor = document.getElementById('resultados-libros');
+    mostrarLibrosEnContenedor(librosPagina, contenedor);
+    
+    // Restaurar paginación inicial si corresponde
+    const paginacionInicial = document.getElementById('paginacion-inicial');
+    const paginacionDinamica = document.getElementById('paginacion-dinamica');
+    
+    if (todosLosLibros.length > LIBROS_POR_PAGINA) {
+        // Mostrar paginación inicial
+        if (paginacionInicial) {
+            paginacionInicial.classList.remove('hidden');
+            actualizarControlesPaginacionInicial();
+        }
+        // Ocultar paginación dinámica
+        if (paginacionDinamica) {
+            paginacionDinamica.classList.add('hidden');
+        }
+    } else {
+        // Ocultar ambas paginaciones
+        if (paginacionInicial) paginacionInicial.classList.add('hidden');
+        if (paginacionDinamica) paginacionDinamica.classList.add('hidden');
+    }
+    
+    // Actualizar contador
+    actualizarContadorResultados(todosLosLibros.length);
+    
+    // Restaurar título
+    const tituloResultados = document.getElementById('titulo-resultados');
+    if (tituloResultados) {
+        tituloResultados.textContent = 'Todos los libros';
+    }
+    
+    // Re-configurar event listeners
+    setTimeout(setupLibroCardsEventListeners, 100);
+};
+
+// Hacer funciones disponibles globalmente
+window.toggleFilter = toggleFilter;
+window.realizarBusqueda = realizarBusqueda;
+window.cambiarPaginaInicial = cambiarPaginaInicial;
+window.cambiarPaginaDinamica = cambiarPaginaDinamica;
+window.mostrarDetallesLibro = mostrarDetallesLibro;
+window.cerrarModalDetalles = cerrarModalDetalles;
+</script>
+{% endblock %}

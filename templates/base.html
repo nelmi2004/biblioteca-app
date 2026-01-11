@@ -27,29 +27,151 @@
                     <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight">DR. Jose Gil Alfonzo</h1>
                 </div>
 
-                <!-- Enlaces de Navegación -->
+                <!-- Menú de usuario autenticado -->
+                {% if session.get('user_id') %}
+                <div class="flex items-center space-x-6">
+                    <!-- Enlaces de Navegación -->
+                    <nav class="flex items-center space-x-6">
+                        <a href="{{ url_for('inicio') }}" 
+                           class="nav-link focus-visible {% if request.path == url_for('inicio') %}nav-link-active{% endif %}">
+                            Inicio
+                        </a>
+                        <a href="{{ url_for('catalogo') }}" 
+                           class="nav-link focus-visible {% if request.path == url_for('catalogo') %}nav-link-active{% endif %}">
+                            Catálogo
+                        </a>
+                        {% if session.get('es_administrador') %}
+                        <a href="{{ url_for('servicios') }}" 
+                           class="nav-link focus-visible {% if request.path == url_for('servicios') %}nav-link-active{% endif %}">
+                            Servicios
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('prestamo') }}" 
+                           class="btn-primary focus-visible {% if request.path == url_for('prestamo') %}nav-link-active{% endif %}">
+                            Registro de Préstamos
+                        </a>
+                        {% if session.get('es_administrador') %}
+                        <a href="{{ url_for('devolucion') }}" 
+                           class="nav-link focus-visible hidden lg:block {% if request.path == url_for('devolucion') %}nav-link-active{% endif %}">
+                            Registro de Devoluciones
+                        </a>
+                        {% endif %}
+                    </nav>
+
+                    <!-- Menú desplegable del usuario -->
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right hidden md:block">
+                            <p class="text-sm font-medium text-gray-700">{{ session.get('nombre_completo', 'Usuario') }}</p>
+                            <p class="text-xs text-gray-500">{{ session.get('numero_estudiante', '') }}</p>
+                        </div>
+                        <div class="relative group">
+                            <button id="user-menu-button" class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="w-5 h-5 text-blue-600"></i>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </button>
+                            
+                            <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                                <a href="{{ url_for('perfil') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i data-lucide="user" class="w-4 h-4 mr-2 text-gray-400"></i>
+                                    Mi Perfil
+                                </a>
+                                <a href="{{ url_for('cambiar_password') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i data-lucide="lock" class="w-4 h-4 mr-2 text-gray-400"></i>
+                                    Cambiar Contraseña
+                                </a>
+                                {% if session.get('es_administrador') %}
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="/admin" class="flex items-center px-4 py-2 text-sm text-purple-700 hover:bg-gray-50">
+                                    <i data-lucide="settings" class="w-4 h-4 mr-2 text-purple-500"></i>
+                                    Panel Admin
+                                </a>
+                                {% endif %}
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="{{ url_for('logout') }}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-50">
+                                    <i data-lucide="log-out" class="w-4 h-4 mr-2 text-red-500"></i>
+                                    Cerrar Sesión
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% else %}
+                <!-- Enlaces cuando no hay usuario autenticado -->
                 <nav class="flex items-center space-x-6">
+                    <a href="{{ url_for('login') }}" 
+                       class="nav-link focus-visible {% if request.path == url_for('login') %}nav-link-active{% endif %}">
+                        Iniciar Sesión
+                    </a>
+                    <a href="{{ url_for('registro') }}" 
+                       class="btn-primary focus-visible {% if request.path == url_for('registro') %}nav-link-active{% endif %}">
+                        Registrarse
+                    </a>
+                </nav>
+                {% endif %}
+
+                <!-- Botón de menú móvil -->
+                <button id="mobile-menu-button" class="lg:hidden text-gray-600 hover:text-gray-900 focus:outline-none">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Menú móvil (oculto por defecto) -->
+            <div id="mobile-menu" class="lg:hidden hidden bg-white border-t border-gray-200 px-4 py-3">
+                {% if session.get('user_id') %}
+                <div class="space-y-2">
                     <a href="{{ url_for('inicio') }}" 
-                       class="nav-link focus-visible {% if request.path == url_for('inicio') %}nav-link-active{% endif %}">
+                       class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
                         Inicio
                     </a>
                     <a href="{{ url_for('catalogo') }}" 
-                       class="nav-link focus-visible {% if request.path == url_for('catalogo') %}nav-link-active{% endif %}">
+                       class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
                         Catálogo
                     </a>
                     <a href="{{ url_for('servicios') }}" 
-                       class="nav-link focus-visible {% if request.path == url_for('servicios') %}nav-link-active{% endif %}">
+                       class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
                         Servicios
                     </a>
                     <a href="{{ url_for('prestamo') }}" 
-                       class="btn-primary focus-visible {% if request.path == url_for('prestamo') %}nav-link-active{% endif %}">
+                       class="block px-3 py-2 rounded-md text-base font-medium text-white bg-blue-600 hover:bg-blue-700">
                         Registro de Préstamos
                     </a>
                     <a href="{{ url_for('devolucion') }}" 
-                       class="nav-link focus-visible hidden lg:block {% if request.path == url_for('devolucion') %}nav-link-active{% endif %}">
+                       class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
                         Registro de Devoluciones
                     </a>
-                </nav>
+                    <div class="border-t border-gray-200 pt-2 mt-2">
+                        <a href="{{ url_for('perfil') }}" 
+                           class="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+                            <i data-lucide="user" class="w-5 h-5 mr-2"></i>
+                            Mi Perfil
+                        </a>
+                        <a href="{{ url_for('cambiar_password') }}" 
+                           class="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+                            <i data-lucide="lock" class="w-5 h-5 mr-2"></i>
+                            Cambiar Contraseña
+                        </a>
+                        <a href="{{ url_for('logout') }}" 
+                           class="flex items-center px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-700 hover:bg-gray-50">
+                            <i data-lucide="log-out" class="w-5 h-5 mr-2"></i>
+                            Cerrar Sesión
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="space-y-2">
+                    <a href="{{ url_for('login') }}" 
+                       class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+                        Iniciar Sesión
+                    </a>
+                    <a href="{{ url_for('registro') }}" 
+                       class="block px-3 py-2 rounded-md text-base font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        Registrarse
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </header>
 
@@ -62,8 +184,19 @@
 
         <!-- FOOTER -->
         <footer class="bg-white py-4 mt-auto">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
-                Grupo #2 PSM Caracas
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="text-center md:text-left text-gray-500 text-sm mb-2 md:mb-0">
+                        Grupo #2 PSM Caracas - Biblioteca Dr. José Gil Alfonzo
+                    </div>
+                    <div class="text-center text-gray-400 text-xs">
+                        {% if session.get('user_id') %}
+                        <span>Sesión activa: {{ session.get('username', 'Usuario') }}</span>
+                        {% else %}
+                        <span>Sistema de Gestión de Préstamos</span>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </footer>
     </div>
@@ -89,47 +222,159 @@
     <script>
     // Scripts globales adicionales
     document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar íconos
+        lucide.createIcons();
+        
+        // Toggle menú móvil
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', function() {
+                const isHidden = mobileMenu.classList.contains('hidden');
+                if (isHidden) {
+                    mobileMenu.classList.remove('hidden');
+                    mobileMenuButton.innerHTML = '<i data-lucide="x" class="w-6 h-6"></i>';
+                } else {
+                    mobileMenu.classList.add('hidden');
+                    mobileMenuButton.innerHTML = '<i data-lucide="menu" class="w-6 h-6"></i>';
+                }
+                lucide.createIcons();
+            });
+        }
+        
+        // Toggle menú de usuario en desktop
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userDropdown = document.getElementById('user-dropdown');
+        
+        if (userMenuButton && userDropdown) {
+            let isUserMenuOpen = false;
+            
+            userMenuButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                isUserMenuOpen = !isUserMenuOpen;
+                userDropdown.classList.toggle('hidden', !isUserMenuOpen);
+            });
+            
+            // Cerrar menú al hacer click fuera
+            document.addEventListener('click', function() {
+                if (isUserMenuOpen) {
+                    userDropdown.classList.add('hidden');
+                    isUserMenuOpen = false;
+                }
+            });
+            
+            // Prevenir que el click dentro del menú lo cierre
+            userDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+        
         // Mejorar la experiencia de carga
         window.addEventListener('beforeunload', function() {
             document.getElementById('global-loading').classList.remove('hidden');
         });
-
+        
         window.addEventListener('load', function() {
             document.getElementById('global-loading').classList.add('hidden');
         });
-
+        
         // Manejar enlaces externos
         document.querySelectorAll('a[href^="http"]').forEach(link => {
-            link.setAttribute('target', '_blank');
-            link.setAttribute('rel', 'noopener noreferrer');
+            if (!link.href.includes(window.location.host)) {
+                link.setAttribute('target', '_blank');
+                link.setAttribute('rel', 'noopener noreferrer');
+            }
         });
-
+        
         // Mejorar accesibilidad del teclado
         document.addEventListener('keydown', function(e) {
-            // Tecla Escape cierra modales
+            // Tecla Escape cierra modales y menús
             if (e.key === 'Escape') {
                 const openModal = document.querySelector('.modal-overlay:not(.hidden)');
                 if (openModal) {
                     openModal.classList.add('hidden');
                 }
+                
+                if (userDropdown && !userDropdown.classList.contains('hidden')) {
+                    userDropdown.classList.add('hidden');
+                    isUserMenuOpen = false;
+                }
             }
         });
-
+        
         // Feedback táctil mejorado para móviles
         if ('ontouchstart' in window) {
             document.body.classList.add('touch-device');
+            
+            // Mejorar interacción táctil
+            document.querySelectorAll('button, a').forEach(element => {
+                element.addEventListener('touchstart', function() {
+                    this.classList.add('active-touch');
+                });
+                
+                element.addEventListener('touchend', function() {
+                    this.classList.remove('active-touch');
+                });
+            });
+        }
+        
+        // Verificar estado de sesión periódicamente
+        setInterval(checkSession, 300000); // Cada 5 minutos
+        
+        async function checkSession() {
+            try {
+                const response = await fetch('/api/auth/check');
+                const result = await response.json();
+                
+                if (!result.autenticado && window.location.pathname !== '/login') {
+                    // Redirigir a login si la sesión expiró
+                    window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+                }
+            } catch (error) {
+                console.log('Error verificando sesión:', error);
+            }
+        }
+        
+        // Mostrar notificación de sesión próxima a expirar
+        setTimeout(() => {
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/logout') {
+                showSessionWarning();
+            }
+        }, 25200000); // 7 horas (1 hora antes de expirar la sesión de 8 horas)
+        
+        function showSessionWarning() {
+            const notification = createNotification(
+                'Tu sesión expirará en 1 hora. ¿Deseas extenderla?',
+                'warning',
+                60000
+            );
+            
+            const extendButton = document.createElement('button');
+            extendButton.textContent = 'Extender Sesión';
+            extendButton.className = 'ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700';
+            extendButton.onclick = async function() {
+                try {
+                    const response = await fetch('/api/auth/check');
+                    const result = await response.json();
+                    
+                    if (result.estado === 'ok') {
+                        notification.remove();
+                        createNotification('Sesión extendida', 'success', 3000);
+                    }
+                } catch (error) {
+                    console.error('Error extendiendo sesión:', error);
+                }
+            };
+            
+            notification.querySelector('div').appendChild(extendButton);
         }
     });
-
+    
     // Función global para mostrar notificaciones
     window.showGlobalNotification = function(message, type = 'info', duration = 5000) {
         const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
-            type === 'success' ? 'message-success' :
-            type === 'error' ? 'message-error' :
-            type === 'warning' ? 'message-warning' :
-            'bg-blue-500 text-white'
-        }`;
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${getNotificationClass(type)} fade-in`;
         
         const icons = {
             success: 'check-circle',
@@ -137,15 +382,15 @@
             warning: 'alert-triangle',
             info: 'info'
         };
-
+        
         notification.innerHTML = `
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <i data-lucide="${icons[type]}" class="w-5 h-5 mr-2"></i>
+                    <i data-lucide="${icons[type]}" class="w-5 h-5 mr-2 ${getNotificationIconClass(type)}"></i>
                     <span class="text-sm">${message}</span>
                 </div>
                 <button onclick="this.parentElement.parentElement.remove()" 
-                        class="ml-4 hover:opacity-70 focus-visible">
+                        class="ml-4 hover:opacity-70 focus-visible p-1 rounded">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -157,13 +402,36 @@
         // Auto-remover después de la duración
         setTimeout(() => {
             if (notification.parentElement) {
-                notification.style.opacity = '0';
-                notification.style.transform = 'translateY(-10px)';
+                notification.classList.add('fade-out');
                 setTimeout(() => notification.remove(), 300);
             }
         }, duration);
+        
+        return notification;
     };
-
+    
+    function createNotification(message, type, duration) {
+        return window.showGlobalNotification(message, type, duration);
+    }
+    
+    function getNotificationClass(type) {
+        switch(type) {
+            case 'success': return 'bg-green-50 text-green-800 border border-green-200';
+            case 'error': return 'bg-red-50 text-red-800 border border-red-200';
+            case 'warning': return 'bg-yellow-50 text-yellow-800 border border-yellow-200';
+            default: return 'bg-blue-50 text-blue-800 border border-blue-200';
+        }
+    }
+    
+    function getNotificationIconClass(type) {
+        switch(type) {
+            case 'success': return 'text-green-500';
+            case 'error': return 'text-red-500';
+            case 'warning': return 'text-yellow-500';
+            default: return 'text-blue-500';
+        }
+    }
+    
     // Función global para mostrar loading
     window.showGlobalLoading = function(show = true) {
         const loading = document.getElementById('global-loading');
@@ -191,22 +459,228 @@
             }, 300);
         }
     };
-
+    
     // Función global para validar email
     window.isValidEmail = function(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     };
-
+    
     // Función global para formato de fecha
     window.formatDate = function(dateString) {
-        const options = { 
-            year: 'numeric', 
-            month: '2-digit', 
-            day: '2-digit',
-            timeZone: 'America/Caracas'
-        };
-        return new Date(dateString).toLocaleDateString('es-VE', options);
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'Fecha inválida';
+            
+            const options = { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit',
+                timeZone: 'America/Caracas'
+            };
+            return date.toLocaleDateString('es-VE', options);
+        } catch (error) {
+            return 'Fecha inválida';
+        }
+    };
+    
+    // Función global para formato de fecha y hora
+    window.formatDateTime = function(dateString) {
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'Fecha/hora inválida';
+            
+            const options = { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'America/Caracas'
+            };
+            return date.toLocaleDateString('es-VE', options);
+        } catch (error) {
+            return 'Fecha/hora inválida';
+        }
+    };
+    
+    // Función para cerrar sesión con confirmación
+    window.confirmLogout = function() {
+        if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+            window.location.href = '/logout';
+        }
+    };
+    
+    // Función para manejar errores de API
+    window.handleApiError = function(error, defaultMessage = 'Error en la operación') {
+        console.error('API Error:', error);
+        
+        let message = defaultMessage;
+        if (error.response && error.response.data && error.response.data.mensaje) {
+            message = error.response.data.mensaje;
+        } else if (error.message) {
+            message = error.message;
+        }
+        
+        window.showGlobalNotification(message, 'error');
+        return message;
     };
     </script>
+    
+    <!-- Estilos adicionales -->
+    <style>
+    .fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    .fade-out {
+        animation: fadeOut 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+    }
+    
+    .spinner {
+        border: 3px solid #f3f4f6;
+        border-top: 3px solid #3b82f6;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .nav-link-active {
+        color: #2563eb;
+        font-weight: 600;
+    }
+    
+    .nav-link-active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: #2563eb;
+    }
+    
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+    
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+    
+    .focus-visible:focus {
+        outline: 2px solid #3b82f6;
+        outline-offset: 2px;
+    }
+    
+    .page-transition {
+        animation: pageFadeIn 0.3s ease-out;
+    }
+    
+    @keyframes pageFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .touch-device .hover-lift:hover {
+        transform: none;
+    }
+    
+    .touch-device .btn-primary:hover {
+        transform: none;
+    }
+    
+    .active-touch {
+        background-color: #f3f4f6 !important;
+    }
+    
+    /* Scrollbar personalizado */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+    
+    /* Estilos para móviles */
+    @media (max-width: 768px) {
+        .spinner {
+            width: 30px;
+            height: 30px;
+        }
+        
+        .btn-primary {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+        }
+    }
+    </style>
 </body>
 </html>

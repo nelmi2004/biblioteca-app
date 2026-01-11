@@ -1,4 +1,4 @@
-import pyodbc
+import pymysql
 from config import Config
 import logging
 
@@ -10,24 +10,25 @@ logger = logging.getLogger(__name__)
 class Database:
     def __init__(self):
         self.config = Config()
-        self.connection_string = self.config.CONNECTION_STRING
-        print(self.config.DB_DRIVER)
+        self.connection_params = {
+            'host': self.config.DB_SERVER,
+            'database': self.config.DB_DATABASE,
+            'user': self.config.DB_USERNAME,
+            'password': self.config.DB_PASSWORD,
+            'port': self.config.DB_PORT
+        }
+        print(f"Conectando a MySQL en {self.config.DB_SERVER}:{self.config.DB_PORT}")
     
     def get_connection(self):
-        """Obtener conexión a la base de datos"""
+        """Obtener conexión a la base de datos MySQL"""
         try:
-            conn = pyodbc.connect(
-                f"DRIVER={self.config.DB_DRIVER};"
-                f"SERVER={self.config.DB_SERVER};"
-                f"DATABASE={self.config.DB_DATABASE};"
-                #f"UID={self.app.config['DB_USERNAME']};"
-                #f"PWD={self.app.config['DB_PASSWORD']}")
-            )
+            conn = pymysql.connect(**self.connection_params)
             return conn
-            
-        except pyodbc.Error as e:
-            logger.error(f"Error conectando a la base de datos: {e}")
+        
+        except pymysql.MySQLError as e:
+            logger.error(f"Error de conexión a la base de datos: {e}")
             return None
+
     
     def execute_query(self, query, params=None):
         """Ejecutar consulta y retornar resultados"""
@@ -54,7 +55,7 @@ class Database:
                 conn.commit()
                 return cursor.rowcount
                 
-        except pyodbc.Error as e:
+        except pymysql.Error as e:
             logger.error(f"Error ejecutando consulta: {e}")
             conn.rollback()
             return None
@@ -85,7 +86,7 @@ class Database:
                 conn.commit()
                 return cursor.rowcount
                 
-        except pyodbc.Error as e:
+        except pymysql.Error as e:
             logger.error(f"Error ejecutando procedimiento {procedure_name}: {e}")
             conn.rollback()
             return None
