@@ -582,6 +582,7 @@ class Prestamo:
                     observaciones = CONCAT(COALESCE(observaciones, ''), '\nRechazado: ', %s, ' - ', %s)
                 WHERE id_prestamo = %s AND estado = 'pendiente'
             """
+
             result=db.execute_query(query, (motivo, observaciones, id_prestamo))
             if result:
                 update_query = """
@@ -591,8 +592,7 @@ class Prestamo:
                         SELECT id_libro FROM prestamos WHERE id_prestamo = %s
                     )
                     """
-                db.execute_query(update_query, (id_prestamos))
-
+                db.execute_query(update_query, (id_prestamo,))      
         
         # Procesar rechazo masivo
         elif id_prestamos and len(id_prestamos) > 0:
@@ -607,14 +607,16 @@ class Prestamo:
             result = db.execute_query(query, params)
                 # Actualizar cantidad disponible del libro
             if result:
-                update_query = """
-                    UPDATE libros 
-                    SET cantidad_disponible = cantidad_disponible + 1 
-                    WHERE id_libro = (
-                        SELECT id_libro FROM prestamos WHERE id_prestamo IN ({placeholders})
-                    )
-                    """
-                db.execute_query(update_query, tuple(id_prestamos))
+                for id in id_prestamos:
+                    update_query = """
+                        UPDATE libros 
+                        SET cantidad_disponible = cantidad_disponible + 1 
+                        WHERE id_libro IN (
+                            SELECT id_libro FROM prestamos WHERE id_prestamo = %s
+                        )
+                        """
+                    db.execute_query(update_query, id)
+                    print("Actualizado libro para préstamo ID:", i)
 
 
 
