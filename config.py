@@ -24,3 +24,7 @@ class Config:
     MAX_LOGIN_ATTEMPTS = 5
     ACCOUNT_LOCKOUT_TIME = 1800  # 30 minutos en segundos
     PASSWORD_RESET_TIMEOUT = 3600  # 1 hora en segundos
+
+    remitente = os.getenv("EMAIL_USER")
+    password = os.getenv("EMAIL_PASS")
+    url_frontend = os.getenv("URL_FRONTEND", "http://127.0.0.1:5000")

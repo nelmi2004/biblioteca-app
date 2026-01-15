@@ -120,7 +120,7 @@ def perfil():
 def cambiar_password():
     """Cambiar contraseña"""
     if request.method == 'GET':
-        return render_template('cambiar_password.html')
+        return render_template('/auth/cambiar_password.html')
     
     elif request.method == 'POST':
         data = request.get_json()
@@ -144,7 +144,7 @@ def cambiar_password():
 def solicitar_reset_password():
     """Solicitar reset de contraseña"""
     if request.method == 'GET':
-        return render_template('solicitar_reset_password.html')
+        return render_template('/auth/solicitar_reset_password.html')
     
     elif request.method == 'POST':
         data = request.get_json()
@@ -164,13 +164,13 @@ def reset_password(token):
     """Resetear contraseña con token"""
     if request.method == 'GET':
         # Verificar que el token sea válido
-        query = "SELECT id_usuario FROM usuarios WHERE reset_password_token = %s"
-        result = db.execute_query(query, (token,))
+        print("Token recibido:", token)
+        result = Auth.verificar_token_reset_password(token)
         
-        if not result:
-            return render_template('reset_password_invalido.html')
+        if result is False:
+            return render_template('/auth/reset_password_invalido.html')
         
-        return render_template('reset_password.html', token=token)
+        return render_template('/auth/reset_password.html', token=token)
     
     elif request.method == 'POST':
         data = request.get_json()
@@ -391,10 +391,12 @@ def api_filtrar_libros():
     """API para filtrar libros con múltiples criterios"""
     try:
         filtros = request.json
+        print("data",filtros)
         
         # Obtener todos los libros primero
-        libros = Libro.obtener_todos()
-        
+        libros = Libro.buscar_libro(filtros.get('query'))
+
+        print(filtros.get('query'))
         # Aplicar filtros
         if filtros.get('autores'):
             libros = [libro for libro in libros if libro['autor'] in filtros['autores']]

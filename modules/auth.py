@@ -1,11 +1,15 @@
 from functools import wraps
 from database import db
+from config import Config
 from flask import session, redirect, url_for, request, flash,jsonify
 from datetime import datetime, timedelta
+from email.message import EmailMessage
+import smtplib
 import bcrypt
 import secrets
 import string
 import logging
+
 
 # Decorador para rutas que requieren autenticación
 def login_requerido(f):
@@ -262,12 +266,15 @@ class Auth:
         try:
             # Buscar usuario por username o email
             query = """
-            SELECT id_usuario, email, nombre, apellido 
+            SELECT id_usuario, email, CONCAT(nombre, ' ', apellido) as usuario
             FROM usuarios 
             WHERE (username = %s OR email = %s) AND activo = 1
             """
             result = db.execute_query(query, (username_or_email, username_or_email))
+
+
             
+
             if not result:
                 # No revelar que el usuario no existe por seguridad
                 return {"estado": "ok", "mensaje": "Si el usuario existe, recibirá un email con instrucciones"}
@@ -285,14 +292,19 @@ class Auth:
             WHERE id_usuario = %s
             """
             db.execute_query(update_query, (token, expira, usuario['id_usuario']))
+
+            # Enviar email con instrucciones
+            usuario = result[0]['usuario']
+            email = result[0]['email']
+            link_reset = f"{Config.url_frontend}/reset-password/{token}"
+            Correo.enviar_email(email, link_reset, expira, usuario)
             
-            # En un entorno real, aquí enviarías un email
             # Por ahora solo retornamos el token para desarrollo
             return {
                 "estado": "ok", 
                 "mensaje": "Se ha enviado un email con instrucciones para resetear la contraseña",
                 "token": token,  # Solo para desarrollo - no incluir en producción
-                "email": usuario['email']
+                "email": email
             }
             
         except Exception as e:
@@ -310,6 +322,7 @@ class Auth:
             WHERE reset_password_token = %s AND activo = 1
             """
             result = db.execute_query(query, (token,))
+
             
             if not result:
                 return {"estado": "error", "mensaje": "Token inválido o expirado"}
@@ -446,3 +459,63 @@ class Auth:
         """
         db.execute_query(query, (user_id,))
 
+    @staticmethod
+    def verificar_token_reset_password(token):
+        """Verificar si el token de reseteo es válido"""
+        query = """
+        SELECT id_usuario, reset_password_expira 
+        FROM usuarios 
+        WHERE reset_password_token = %s 
+        """
+        result = db.execute_query(query, (token,))
+        
+        if not result:
+            return False
+        
+        usuario = result[0]
+        
+        # Verificar expiración
+        expira = usuario['reset_password_expira']
+        if expira and datetime.now() > expira:
+            return False
+        
+        return True
+
+class Correo:
+    @staticmethod
+    def enviar_email(destinatario, link_reset, expira, usuario):
+         # Datos del remitente y destinatario
+         remitente = Config.remitente
+         destinatario = "nelp39229@gmail.com"
+         # ¡No uses tu contraseña real! Usa una "Contraseña de aplicación"
+         password = Config.password
+         # Crear el mensaje
+         email = EmailMessage()
+         email["From"] = Config.remitente
+         email["To"] = destinatario
+         email["Subject"] = "Información de tu nueva cuenta"
+         
+         # Cuerpo del mensaje con la contraseña
+         cuerpo_mensaje = f"""
+         Hola {usuario}, 
+         
+         Se ha generado un enlace para que realice el reseteo de contraseña para tu acceso:
+         Enlace: {link_reset}
+
+         Expirará el: {expira.strftime('%Y-%m-%d %H:%M:%S')}
+
+         Si no solicitaste este cambio,comunicar con el administrador del sistema.
+         Saludos,
+         """
+         email.set_content(cuerpo_mensaje)
+         
+         # Envío del correo
+         try:
+             # Configuración del servidor (ejemplo para Gmail)
+             smtp = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+             smtp.login(remitente, password)
+             smtp.send_message(email)
+             smtp.quit()
+             print("Correo enviado exitosamente.")
+         except Exception as e:
+             print(f"Error al enviar correo: {e}")

@@ -184,6 +184,41 @@ class Libro:
         ORDER BY categoria
         """
         return db.execute_query(query) or []
+    
+    @staticmethod
+    def buscar_libro(busqueda):
+        """Obtener todos los libros"""
+        query = """
+        SELECT 
+            l.id_libro as id,
+            l.titulo,
+            CONCAT(a.nombre, ' ', a.apellido) as autor,
+            a.id_autor,
+            l.cota,
+            c.nombre as categoria,
+            c.id_categoria,
+            d.nombre as carrera,
+            d.id_carrera,
+            l.tomo as tomo,
+            l.ubi as Ubicacion,
+            l.editorial,
+            l.cantidad_total,
+            l.cantidad_disponible,
+            CASE WHEN l.cantidad_disponible > 0 THEN 1 ELSE 0 END as disponible
+        FROM libros l
+        JOIN autores a ON l.id_autor = a.id_autor
+        JOIN categorias c ON l.id_categoria = c.id_categoria
+        JOIN carrera d ON l.id_carrera = d.id_carrera
+        WHERE l.activo = 1 AND a.activo = 1 AND c.activo = 1 AND d.activo = 1
+        AND ( 
+        CONCAT(a.nombre, ' ', a.apellido) LIKE %s OR
+        l.titulo LIKE %s OR
+        c.nombre LIKE %s)
+        ORDER BY l.titulo
+        """
+        search_t = f"%{busqueda}%"
+        return db.execute_query(query, (search_t,search_t,search_t,)) or []
+    
 
 class Autor:
     @staticmethod
@@ -650,3 +685,4 @@ class Estadisticas:
             'total_autores': 0,
             'total_categorias': 0
         }
+
