@@ -1142,6 +1142,20 @@ function cerrarModalDetalles() {
     document.body.style.overflow = 'auto';
 }
 
+// Función para alternar filtros
+function toggleFilter(filterId) {
+    const filterList = document.getElementById(filterId);
+    const icon = filterList.previousElementSibling.querySelector('i');
+    
+    if (filterList.classList.contains('hidden')) {
+        filterList.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        filterList.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
+    }
+}
+
 // Hacer funciones disponibles globalmente
 window.toggleFilter = toggleFilter;
 window.realizarBusqueda = realizarBusqueda;

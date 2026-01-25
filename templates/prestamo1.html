@@ -75,7 +75,7 @@
                     <option value="rechazado">Rechazado</option>
                     <option value="activo">Activo</option>
                     <option value="devuelto">Devuelto</option>
-                    <option value="atrasado">Atrasado</option>
+                    <option value="vencido">Vencido</option>
                 </select>
             </div>
         </div>
@@ -655,6 +655,8 @@ function mostrarPrestamos() {
     document.getElementById('total-resultados').textContent = prestamosFiltrados.length;
 
     console.log(`📄 Mostrando préstamos ${inicio + 1} a ${fin} de ${prestamosFiltrados.length}`);
+
+    console.log('🔄 inofrmacion pres', prestamos);
     
     // Generar filas de la tabla
     lista.innerHTML = prestamosPagina.map(prestamo => `
@@ -692,7 +694,7 @@ function mostrarPrestamos() {
                     ${getEstadoTexto(prestamo.estado)}
                 </span>
                 ${prestamo.esta_atrasado ? 
-                    '<span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Atrasado</span>' : ''}
+                    '<span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Vencido</span>' : ''}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <div class="flex items-center space-x-2">
@@ -1208,9 +1210,10 @@ async function mostrarDetallesPrestamo(prestamoId) {
         
         if (result.estado === 'ok' && result.prestamo) {
             const prestamo = result.prestamo[0];
+            const prestamo1 = result.prestamo[1];
 
-        console.log('📖 Detalles del préstamo:', prestamo.fecha_aprobacion);
-        console.log('📖 Detalles del préstamo con formato :', formatFecha(prestamo.fecha_aprobacion));
+        console.log('📖 Detalles del préstamo:', prestamo1.historial);
+        console.log('📖 Detalles del préstamo con formato :', formatFecha(prestamo.historial));
         
             
             // Información del estudiante
@@ -1284,7 +1287,7 @@ async function mostrarDetallesPrestamo(prestamoId) {
             `;
             
             // Historial de estados
-            const historialHTML = prestamo.historial ? prestamo.historial.map(item => `
+            const historialHTML = prestamo1.historial ? prestamo1.historial.map(item => `
                 <div class="flex items-start">
                     <div class="flex-shrink-0">
                         <div class="w-8 h-8 rounded-full ${getEstadoColor(item.estado)} flex items-center justify-center">
@@ -1404,7 +1407,7 @@ function getEstadoClass(estado) {
         case 'activo': return 'bg-green-100 text-green-800';
         case 'devuelto': return 'bg-gray-100 text-gray-800';
         case 'rechazado': return 'bg-red-100 text-red-800';
-        case 'atrasado': return 'bg-red-100 text-red-800';
+        case 'vencido': return 'bg-red-100 text-red-800';
         default: return 'bg-gray-100 text-gray-800';
     }
 }
@@ -1416,7 +1419,7 @@ function getEstadoTexto(estado) {
         case 'activo': return 'Activo';
         case 'devuelto': return 'Devuelto';
         case 'rechazado': return 'Rechazado';
-        case 'atrasado': return 'Atrasado';
+        case 'vencido': return 'Vencido';
         default: return estado;
     }
 }
@@ -1428,7 +1431,7 @@ function getEstadoColor(estado) {
         case 'activo': return 'bg-green-500';
         case 'devuelto': return 'bg-gray-500';
         case 'rechazado': return 'bg-red-500';
-        case 'atrasado': return 'bg-red-500';
+        case 'vencido': return 'bg-red-500';
         default: return 'bg-gray-500';
     }
 }
@@ -1440,7 +1443,7 @@ function getEstadoIcon(estado) {
         case 'activo': return 'book-check';
         case 'devuelto': return 'rotate-ccw';
         case 'rechazado': return 'x';
-        case 'atrasado': return 'alert-triangle';
+        case 'vencido': return 'alert-triangle';
         default: return 'circle';
     }
 }

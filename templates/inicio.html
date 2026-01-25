@@ -25,12 +25,14 @@
             </div>
             <div class="text-gray-600 text-sm">Préstamos Activos</div>
         </div>
+        {% if session.get('es_administrador') %}
         <div class="bg-white p-4 rounded-lg shadow text-center">
             <div class="text-2xl font-bold text-purple-600" data-counter="total_usuarios">
                 {{ estadisticas.total_usuarios if estadisticas else 0 }}
             </div>
             <div class="text-gray-600 text-sm">Usuarios</div>
         </div>
+        {% endif %}
     </div>
 
     <!-- Formulario de Búsqueda -->

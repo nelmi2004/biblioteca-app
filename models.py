@@ -431,6 +431,7 @@ class Prestamo:
             db.execute_query(update_query, (id_prestamo,))
         
         return result
+
     
     @staticmethod
     def obtener_prestamo_pendientes(buscar, filtro_estado, filtro_fecha, fecha_desde, fecha_hasta,auth_usuario):
@@ -484,7 +485,7 @@ class Prestamo:
             query += " AND p.estado = %s"
             params.append(filtro_estado)
         else:
-            query += " AND p.estado IN ('pendiente', 'aprobado', 'activo', 'devuelto', 'rechazado')"
+            query += " AND p.estado IN ('pendiente', 'aprobado', 'activo', 'devuelto', 'rechazado', 'vencido')"
         
         # Filtrar por búsqueda
         if buscar:
@@ -669,8 +670,8 @@ class Estadisticas:
         """Obtener estadísticas generales de la biblioteca"""
         query = """
         SELECT 
-            (SELECT COUNT(*) FROM libros WHERE activo = 1) as total_libros,
-            (SELECT COUNT(*) FROM libros WHERE activo = 1 AND cantidad_disponible > 0) as libros_disponibles,
+            (SELECT sum(cantidad_total) FROM libros WHERE activo = 1) as total_libros,
+            (SELECT sum(cantidad_disponible) FROM libros WHERE activo = 1 AND cantidad_disponible > 0) as libros_disponibles,
             (SELECT COUNT(*) FROM prestamos WHERE estado = 'activo') as prestamos_activos,
             (SELECT COUNT(*) FROM usuarios WHERE activo = 1) as total_usuarios,
             (SELECT COUNT(*) FROM autores WHERE activo = 1) as total_autores,

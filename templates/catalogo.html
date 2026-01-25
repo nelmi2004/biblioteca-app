@@ -330,18 +330,6 @@ const LIBROS_POR_PAGINA = 9;
 let todosLosLibros = [];
 let modalAbierto = false;
 
-// Función para alternar filtros
-function toggleFilter(filterId) {
-    const filterList = document.getElementById(filterId);
-    const icon = filterList.previousElementSibling.querySelector('i');
-    
-    if (filterList.classList.contains('hidden')) {
-        filterList.classList.remove('hidden');
-        icon.style.transform = 'rotate(180deg)';
-    } else {
-        filterList.classList.add('hidden');
-        icon.style.transform = 'rotate(0deg)';
-    }
-}
+
 </script>
 {% endblock %}

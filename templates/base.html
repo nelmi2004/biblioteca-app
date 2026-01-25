@@ -50,12 +50,6 @@
                            class="btn-primary focus-visible {% if request.path == url_for('prestamo') %}nav-link-active{% endif %}">
                             Registro de Préstamos
                         </a>
-                        {% if session.get('es_administrador') %}
-                        <a href="{{ url_for('devolucion') }}" 
-                           class="nav-link focus-visible hidden lg:block {% if request.path == url_for('devolucion') %}nav-link-active{% endif %}">
-                            Registro de Devoluciones
-                        </a>
-                        {% endif %}
                     </nav>
 
                     <!-- Menú desplegable del usuario -->

@@ -740,6 +740,38 @@ def obtener_detalles_prestamo(prestamo_id):
                 }
             ]
         }
+        historial_ejemplo = {'historial': [
+                {
+                    'estado': 'pendiente',
+                    'fecha': '2024-01-15 10:30:00',
+                    'motivo': 'Solicitud creada',
+                    'observaciones': 'Estudiante solicitó el préstamo'
+                },                
+                {
+                    'estado': 'aprobado',
+                    'fecha': '2024-01-15 10:30:00',
+                    'motivo': 'Solicitud creada',
+                    'observaciones': 'Estudiante solicitó el préstamo'
+                },
+                {
+                    'estado': 'Rechazado',
+                    'fecha': '2024-01-15 10:30:00',
+                    'motivo': 'Solicitud creada',
+                    'observaciones': 'Estudiante solicitó el préstamo'
+                },
+                {
+                    'estado': 'Devuelto',
+                    'fecha': '2024-01-15 10:30:00',
+                    'motivo': 'Solicitud creada',
+                    'observaciones': 'Estudiante solicitó el préstamo'
+                }
+                
+            ]
+        }
+
+
+        resultado.append(historial_ejemplo)
+
         
         return jsonify({
             'estado': 'ok',
@@ -811,6 +843,7 @@ def aprobar_prestamo():
 @app.route('/api/marcar-devuelto/<int:prestamo_id>', methods=['POST'])
 def marcar_devuelto(prestamo_id):
     try:
+        
         prestamo = Prestamo.registrar_devolucion(prestamo_id)
         
 
